@@ -1,0 +1,32 @@
+/* tslint:disable */
+import { enableProdMode, NgModuleRef } from '@angular/core';
+import { disableDebugTools } from '@angular/platform-browser';
+import { Environment } from './model';
+
+enableProdMode();
+
+export const environment: Environment = {
+  production: true,
+  API_BASE_ENDPOINT: 'http://localhost:51636',
+  API_ENDPOINT: 'http://localhost:4200/',
+  defaultLanguage: {
+    key: 'vi-VN',
+    region: 'vn',
+    alt: 'Việt Nam',
+    title: 'Tiếng Việt (VN)'
+  },
+  showDevModule: true,
+
+  /** Angular debug tools in the dev console
+   * https://github.com/angular/angular/blob/86405345b781a9dc2438c0fbe3e9409245647019/TOOLS_JS.md
+   * @param modRef
+   * @return {any}
+   */
+  decorateModuleRef(modRef: NgModuleRef<any>) {
+    disableDebugTools();
+    return modRef;
+  },
+  ENV_PROVIDERS: [
+
+  ]
+};

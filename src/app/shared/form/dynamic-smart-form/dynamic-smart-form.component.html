@@ -1,0 +1,9 @@
+<dynamic-smart-form-control *ngFor="let controlModel of model; trackBy: trackByFn"
+                            [group]="group"
+                            [hasErrorMessaging]="controlModel.hasErrorMessages"
+                            [layout]="layout"
+                            [model]="controlModel"
+                            [templates]="templates"
+                            (dfBlur)="onEvent($event, 'blur')"
+                            (dfChange)="onEvent($event, 'change')"
+                            (dfFocus)="onEvent($event, 'focus')"></dynamic-smart-form-control>

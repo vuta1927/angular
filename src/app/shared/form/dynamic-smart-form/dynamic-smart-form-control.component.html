@@ -1,0 +1,264 @@
+<div [formGroup]="group" 
+  [ngClass]="[getClass('element','container'), getClass('grid','container')]"
+  [class.state-error]="showErrorMessages">
+
+    <section [ngClass]="[getClass('grid', 'control')]">
+
+      <label *ngIf="type !== 'checkbox' && model.label"
+        [for]="model.id"
+        [innerHTML]="model.label | translate"
+        [ngClass]="[getClass('element', 'label'), getClass('grid', 'label')]"></label>
+
+      <ng-container *ngTemplateOutlet="templates[0]?.templateRef; context: model"></ng-container>
+
+      <!--======[ CHECKBOX ]======-->
+      <div *ngIf="type==='checkbox'" [ngClass]="getClass('grid','control')">
+        <label class="checkbox">
+
+          <input type="checkbox"
+            [checked]="model.checked"
+            [formControlName]="model.id"
+            [indeterminate]="model.indeterminate"
+            [name]="model.name"
+            [ngClass]="getClass('element','control')"
+            [required]="model.required"
+            [tabindex]="model.tabIndex"
+            [value]="model.value"
+            (blur)="onBlur($event)"
+            (change)="onValueChange($event)"
+            (focus)="onFocus($event)"/>
+            <i></i>
+            <span [innerHTML]="model.label | translate"
+              [ngClass]="[getClass('element','label'), getClass('grid','label')]"></span>
+
+        </label>
+      </div>
+
+      <ng-container [ngSwitch]="type">
+
+        <!--======[ ROW ]======-->
+        <ng-container *ngSwitchCase="'row'">
+            <dynamic-smart-form-control *ngFor="let controlModel of model.group"
+              [group]="control"
+              [hasErrorMessaging]="controlModel.hasErrorMessages"
+              [layout]="layout"
+              [model]="controlModel"
+              [templates]="templateList"
+              (dfBlur)="onBlur($event)"
+              (dfChange)="onValueChange($event)"
+              (dfFocus)="onFocus($event)"></dynamic-smart-form-control>
+        </ng-container>
+
+        <!--======[ FORM GROUP ]======-->
+
+        <fieldset *ngSwitchCase="'group'"
+            [dynamicId]="bindId && model.id"
+            [formGroupName]="model.id"
+            [name]="model.name">
+
+            <dynamic-smart-form-control *ngFor="let controlModel of model.group"
+                    [group]="control"
+                    [hasErrorMessaging]="controlModel.hasErrorMessages"
+                    [layout]="layout"
+                    [model]="controlModel"
+                    [templates]="templateList"
+                    (dfBlur)="onBlur($event)"
+                    (dfChange)="onValueChange($event)"
+                    (dfFocus)="onFocus($event)"></dynamic-smart-form-control>
+        </fieldset>
+
+        <!--======[ DATEPICKER ]======-->
+        <label class="input" *ngSwitchCase="'datepicker'">
+            <ng-container *ngIf="model.icon">
+              <i [class]="model.icon"></i>
+            </ng-container>
+
+            <!-- <input type="text" name="request" placeholder="Request activation on" class="datepicker" data-dateformat="dd/mm/yy"> -->
+
+            <input uiDatepicker
+              [autofocus]="model.autoFocus"
+              [changeMonth]="getAdditional('changeMonth', false)"
+              [changeYear]="getAdditional('changeYear', false)"
+              [dateFormat]="model.format"
+              [dynamicId]="bindId && model.id"
+              [formControlName]="model.id"
+              [maxDate]="model.max"
+              [minDate]="model.min"
+              [name]="model.name"
+              [ngClass]="getClass('element', 'control')"
+              [numberOfMonths]="getAdditional('numberOfMonths')"
+              [selectOtherMonths]="getAdditional('selectOtherMonths', false)"
+              [showButtonPanel]="getAdditional('showButtonPanel', false)"
+              [showOtherMonths]="getAdditional('showOtherMonths', false)"
+              [showAnim]="getAdditional('showAnim', 'fadeIn')"
+              [showWeek]="getAdditional('showWeek', false)"
+              [placeholder]="model.placeholder | translate"
+              [readonly]="model.readOnly"
+              [required]="model.required"
+              (change)="onValueChange($event)">
+ 
+            <!-- <input class="datepicker" ngbDatepicker #d="ngbDatepicker"
+              [autofocus]="model.autoFocus"
+              [dayTemplate]="customDay"
+              [dynamicId]="bindId && true.id"
+              [formControlName]="model.id"
+              [maxDate]="model.max"
+              [minDate]="model.min"
+              [name]="model.name"
+              [outsideDays]="getAdditional('outsideDays', 'visible')"
+              [ngClass]="getClass('element','control')"
+              [placeholder]="model.placeholder"
+              [placement]="getAdditional('placement', 'top')"
+              [readonly]="model.readOnly"
+              [required]="model.required"
+              (change)="onValueChange($event)"
+              (onHidden)="onCustomEvent($event, 'onHidden')"
+              (onShown)="onCustomEvent($event, 'onShown')"
+              (click)="d.toggle();$event.stopPropagation();"
+              (document:click)="d.close()"
+              (select)="onDateSelect($event)"> -->
+        </label>
+
+        <ng-template #customDay let-date="date" let-currentMonth="currentMonth" let-selected="selected" let-disabled="disabled" let-focused="focused">
+            <span 
+              class="custom-day" 
+              [class.focused]="focused"
+              [class.bg-primary]="selected" 
+              [class.hidden]="date.month !== currentMonth"
+              [class.text-muted]="disabled"
+              (click)="pickDate(date, $event)">
+              {{ date.day }}
+            </span>
+          </ng-template>
+
+        <!--======[ INPUT ]=====-->
+        <ng-container *ngSwitchCase="'input'">
+
+          <label class="input">
+            
+            <ng-container *ngIf="model.icon">
+              <i [class]="model.icon"></i>
+            </ng-container>
+
+              <input
+                [attr.accept]="model.accept"
+                [attr.list]="model.listId"
+                [attr.max]="model.max"
+                [attr.min]="model.min"
+                [attr.multiple]="model.multiple"
+                [attr.step]="model.step"
+                [autocomplete]="model.autoComplete"
+                [autofocus]="model.autoFocus"
+                [dynamicId]="bindId && model.id"
+                [formControlName]="model.id"
+                [maxlength]="model.maxLength"
+                [minlength]="model.minLength"
+                [name]="model.name"
+                [pattern]="model.pattern"
+                [placeholder]="model.placeholder | translate"
+                [readonly]="model.readOnly"
+                [required]="model.required"
+                [spellcheck]="model.spellcheck"
+                [tabindex]="model.tabIndex"
+                [textMask]="{mask: (model.mask || false), showMask: model.mask && !(model.placeholder)}"
+                [type]="model.inputType"
+                (blur)="onBlur($event)"
+                (change)="onValueChange($event)"
+                (focus)="onFocus($event)"
+              />
+
+              <ng-container *ngIf="model.hint">
+                  <b [class]="'tooltip tooltip-' + model.hint.position">
+
+                    <i [class]="model.hint.icon"></i>
+                    {{model.hint.text}}
+                  </b>
+              </ng-container>
+          </label>
+          
+        </ng-container>
+
+        <!--======[ SELECT ]=====-->
+        <label class="select" *ngSwitchCase="'select'">
+          <select
+            [dynamicId]="bindId && model.id"
+            [formControlName]="model.id"
+            [name]="model.name"
+            [required]="model.required"
+            [tabIndex]="model.tabIndex"
+            (blur)="onBlur($event)"
+            (change)="onValueChange($event)"
+            (focus)="onFocus($event)">
+              <option *ngFor="let option of model.options$ | async"
+                [disabled]="option.disabled"
+                [ngValue]="option.value">{{ option.label | translate }}</option>
+          </select>
+          <i></i>
+        </label>
+
+        <!--======[ RADIO ]=====-->
+        <ng-container *ngSwitchCase="'radio'">
+        
+          <ng-template #radio>
+              <label class="radio" *ngFor="let option of model.options$ | async">
+            
+                  <input type="radio"
+                    [formControlName]="model.id"
+                    [name]="model.name"
+                    [value]="model.value"
+                    (blur)="onBlur($event)"
+                    (focus)="onFocus($event)"
+                  />
+                  <i></i>
+                  <span [innerHTML]="option.label | translate"></span>
+            
+                </label>
+          </ng-template>
+
+          <ng-container *ngIf="model.radioType === 'inline'">
+            <div class="inline-group">
+              <ng-container *ngTemplateOutlet="radio"></ng-container>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="model.radioType === 'column'">
+              <div class="row">
+                  <ng-container *ngTemplateOutlet="radio"></ng-container>
+                </div>
+          </ng-container>
+
+        </ng-container>
+
+        <!--======[ TEXTAREA ]======-->
+        <label class="textarea" *ngSwitchCase="'textarea'" [class.state-error]="showErrorMessages">
+            <textarea  class="form-control"
+              [dynamicId]="bindId && model.id"
+              [cols]="model.cols"
+              [formControlName]="model.id"
+              [maxlength]="model.maxLength"
+              [minlength]="model.minLength"
+              [name]="model.name"
+              [ngClass]="getClass('element','control')"
+              [placeholder]="model.placeholder | translate"
+              [readonly]="model.readOnly"
+              [required]="model.required"
+              [rows]="model.rows"
+              [spellcheck]="model.spellCheck"
+              [tabindex]="model.tabIndex"
+              [wrap]="model.wrap"
+              (blur)="onBlur($event)"
+              (change)="onValueChange($event)"
+              (focus)="onFocus($event)"></textarea>
+        </label>
+
+      </ng-container>
+
+      <label *ngIf="showErrorMessages" class="error" [ngClass]="[getClass('element','errors'), getClass('grid','errors')]">
+        {{ errorMessages[0] | translate }}
+      </label>
+
+      <ng-container *ngTemplateOutlet="templates[1]?.templateRef; context: model"></ng-container>
+
+    </section>
+
+</div>

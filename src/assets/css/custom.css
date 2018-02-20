@@ -1,0 +1,48 @@
+/*
+ * It is advised not to edit the smartadmin_production.css
+ * as this will override any changes you make in the 
+ * later versions of this theme. 
+ * 
+ * We advise that you use use this CSS to override 
+ * SmartAdmin styles. 
+ * 
+ * Rename the stylesheet to whatever your liking so it will stay
+ * unique to you with each update of SmartAdmin.
+ */
+
+/*
+ * INDEX
+ * 
+ * - HTML
+ * - BODY
+ * - CUSTOM STYLES
+ */
+ .smart-form section {
+    margin-bottom: 0;
+}
+
+.smart-form section section {
+    margin-bottom: 15px;
+}
+
+.smart-form fieldset {
+    border-top: 1px solid rgba(0,0,0,.1);
+}
+
+.error {
+    color: #A90329;
+}
+
+.igore-smart-form-section {
+    margin-bottom: 0 !important;
+}
+
+.tooltip.show {
+    opacity: .9;
+}
+
+.m-page-loader {
+    position: fixed;
+    top: 0;
+    bottom: 0
+}

@@ -1,0 +1,24 @@
+// need to override just one or two small stylistic things and don't want to edit the main .scss files?  Add those overrides here
+.smart-form section {
+  margin-bottom: 0;
+}
+
+.smart-form section section {
+  margin-bottom: 15px;
+}
+
+.smart-form fieldset {
+  border-top: 1px solid rgba(0, 0, 0, .1);
+}
+
+.error {
+  color: #A90329;
+}
+
+.igore-smart-form-section {
+  margin-bottom: 0 !important;
+}
+
+.tooltip.show {
+  opacity: .9;
+}
