@@ -17,13 +17,13 @@ export class LoginInfoComponent implements OnInit {
   }
 
   public ngOnInit() {
-    this.userService.getLoginInfo().subscribe((user) => {
-      this.user = user;
-    });
+    // this.userService.getLoginInfo().subscribe((user) => {
+    //   this.user = user;
+    // });
 
   }
 
   public toggleShortcut() {
-    this.layoutService.onShortcutToggle();
+    // this.layoutService.onShortcutToggle();
   }
 }
