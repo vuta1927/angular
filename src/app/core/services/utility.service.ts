@@ -351,8 +351,8 @@ export class UtilityService {
     try {
       result = JSON.stringify(object);
       return result;
-    // tslint:disable-next-line:no-empty
-    } catch (error) {}
+      // tslint:disable-next-line:no-empty
+    } catch (error) { }
 
     const simpleObject = {};
 
@@ -713,12 +713,12 @@ export class UtilityService {
   public debounce(func: (...args) => any, wait: number, immediate?: boolean) {
     let timeout;
 
-    return function() {
+    return function () {
       const context = this;
       // tslint:disable-next-line:variable-name
       const args_ = arguments;
 
-      const later = function() {
+      const later = function () {
         timeout = null;
         if (!immediate) {
           func.apply(context, args_);
@@ -743,5 +743,21 @@ export class UtilityService {
 
   private isLoadedStyle(lib: string) {
     return document.querySelectorAll('[href="' + lib + '"]').length > 0;
+  }
+
+  public getRandomInt(start, end) {
+    return Math.floor(Math.random() * end) + start;
+  }
+  public getRandomColor() {
+    return '#' + (this.pad(this.getRandomInt(0, 255).toString(16), 2) + this.pad(this.getRandomInt(0, 255).toString(16), 2) + this.pad(this.getRandomInt(0, 255).toString(16), 2));
+  }
+  public pad(str, length) {
+    while (str.length < length) {
+      str = '0' + str;
+    }
+    return str;
+  }
+  public getRandomNum(min, max) {
+    return Math.random() * (max - min) + min;
   }
 }
