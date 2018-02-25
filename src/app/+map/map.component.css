@@ -1,8 +1,21 @@
-/* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
-       #gmap {
-        height: 450px;
-        border-style: groove; 
-        border-width:1px;
-      }
-      
+#gmap {
+  height: 450px;
+  border-style: groove;
+  border-width: 1px;
+}
+
+#setPoint {
+  background-color: #fff;
+  border: 2px solid #fff;
+  cursor: pointer;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+  background-image: url(https://cdn2.iconfinder.com/data/icons/navigation-and-mapping-1/65/path2-24.png);
+  margin-top: 12px;
+  height: 28px;
+  width: 30px;
+}
+#setPoint:hover{
+  background-color: darkgray;
+}
+

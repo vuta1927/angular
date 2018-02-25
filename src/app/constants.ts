@@ -12,4 +12,12 @@ export class Constants {
 
   public static USER_INFO = 'assets/api/user/login-info.json';
   public static ACTIVITIES = 'assets/api/activities/activities.json';
+
+  public static accDPs = 4;
+  public static apiKey = 'AIzaSyCIdU-_NtOo4l9pcOEIDMGbgIPnRitcIx8';
+  public static mapType = {
+    Google: 100,
+    Microsoft: 200,
+    Fabric: 300,
+  }
 }
