@@ -4,6 +4,7 @@ import { forEach } from '@angular/router/src/utils/collection';
 import { GMap } from '../models/Map';
 import { Road, Coordinate } from '../models/Road';
 import { UtilityService } from '../../core/services/utility.service';
+import {FormsModule} from '@angular/forms';
 declare let google: any;
 let GLOBAL = {
     snapPoints: [],
@@ -24,13 +25,15 @@ export class GmapService {
         Default: false,
         SnapMode: true
     };
-    loadingOverlay: any;
+    currentRoad: Road;
+    Popup: any;
+    inforWindows = [];
     directionResponses: any; // bien luu tru 2 tuyen duong kha thi giua 2 toa do
     constructor(private utilityService: UtilityService) { }
 
     public initGoogleMap(obj) {
         this.gmap = obj;
-        this.loadingOverlay = new google.maps.OverlayView();
+
         this.directionsService = new google.maps.DirectionsService();
         this.directionsDisplay = new google.maps.DirectionsRenderer();
 
@@ -44,7 +47,7 @@ export class GmapService {
             bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
         });
         this.gmap.controller.fitBounds(bounds);
-        GLOBAL['GmapService'] = this;
+        GLOBAL.GmapService = this;
 
         let mother = this;
         this.gmap.controller.addListener('click', function (event) {
@@ -52,6 +55,9 @@ export class GmapService {
                 for (let i = 0; i < mother.routeMarkers.length; i++) {
                     mother.routeMarkers[i].setMap(null);
                 }
+            }
+            for(var i=0;i < mother.inforWindows.length; i++){
+                mother.inforWindows[i].setMap(null);
             }
         });
         this.geocoder = new google.maps.Geocoder();
@@ -62,11 +68,10 @@ export class GmapService {
             this.drawRoute(road, this.drawMode.Default);
         });
         this.gmap.controller.setOptions({ draggableCursor: 'default' });
+        let parentElement = document.createElement('DIV');
         if (this.gmap.editMode) {
-            let parentElement = document.createElement('DIV');
             this.initializeSnapToRoad(parentElement);
         }
-        let parentElement = document.createElement('DIV');
         this.initializeResetView(parentElement);
     }
 
@@ -99,7 +104,6 @@ export class GmapService {
             }
             GLOBAL.isSnapEnable = true;
             GLOBAL.GmapService.gmap.controller.setOptions({ draggableCursor: 'crosshair' });
-            // console.log(element);
             document.getElementById('setPoint').style.backgroundColor = '#ddd';
             document.getElementById('setPoint').style.border = '2px solid #ddd';
         });
@@ -207,14 +211,12 @@ export class GmapService {
     }
 
     private directionsearch(response: any, status: string, destCoodrs: Array<any>, road: Road) {
-        //console.log("directionsearch status="+status);
         let mother = this;
         if (status == google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
             console.log("OVER_QUERY_LIMIT");
             setTimeout(() => {
                 mother.drawRoute(road, mother.drawMode.SnapMode);
             }, 1000);
-            //console.log("OVER_QUERY_LIMIT End");	
         } else {
             if (status == google.maps.DirectionsStatus.OK) {
                 let currentResponses = [];
@@ -232,13 +234,12 @@ export class GmapService {
                             newPaths.push(road.paths[i]);
                         }
                         setTimeout(() => {
-                            mother.drawRoute(new Road(road.id, newPaths, 0, road.color, road.metadata), mother.drawMode.SnapMode);
+                            mother.drawRoute(new Road(road.id, newPaths, 0, road.color, road.metaData), mother.drawMode.SnapMode);
                         }, 10);
                     } else {
                         let distance1: number = currentResponses[0].response.routes[0].legs[1].distance.value;
                         let distance2: number = currentResponses[1].response.routes[0].legs[1].distance.value;
                         let correctRoadResponse: any;
-                        console.log('road id:' + road.id + ':' + distance1 + '--' + distance2);
                         if (distance1 < distance2) {
                             road.distance = distance1;
                             correctRoadResponse = currentResponses[0].response;
@@ -253,11 +254,8 @@ export class GmapService {
                         if (correctRoadResponse.routes) {
                             route_latlngs = correctRoadResponse.routes[0].overview_path;
                         } else {
-                            // route_latlngs = JSON.parse(response.split("|")[0]);
                             route_latlngs = JSON.parse(correctRoadResponse);
-                            // console.log(route_latlngs);
                         }
-                        console.log(road.id,route_latlngs);
                         mother.shortenAndShow(route_latlngs, road);
                     }
                 }
@@ -275,10 +273,12 @@ export class GmapService {
         if (overview_pathlatlngs) {
             var loading = document.getElementById('wait');
             loading.innerHTML = "";
-            for(let marker of this.routeMarkers){
+            for (let marker of this.routeMarkers) {
                 marker.setMap(null);
             }
-            this.routeMarkers = [];this.routeMarkersLatLng = [];
+            this.routeMarkers = [];
+            this.routeMarkersLatLng = [];
+            road.paths = [];
             for (let i = 0; i < overview_pathlatlngs.length; i++) {
                 let lat = overview_pathlatlngs[i].lat;
                 if (typeof lat !== "number") {
@@ -288,16 +288,13 @@ export class GmapService {
                 if (typeof lng !== "number") {
                     lng = overview_pathlatlngs[i].lng();
                 }
+
+                road.paths.push(new Coordinate(lat, lng));
                 if (i == 0 || i == overview_pathlatlngs.length - 1) {
                     this.routeMarkersLatLng.push({ roadId: road.id, latLng: new google.maps.LatLng(lat, lng) });
-                    let marker = this.createMaker('', new google.maps.LatLng(lat, lng), road, true);
-                    // marker.addListener('click', function () {
-                    //     this.showInfoWindow('', this.gmap.controller, road, marker, {latLng: new google.maps.LatLng(lat, lng)});
-                    // });
+                    let marker = this.createMaker('', new google.maps.LatLng(lat, lng), road, this.gmap.editMode);
                     this.routeMarkers.push(marker);
-                    // this.createMaker(road.description, new google.maps.LatLng(lat, lng));
                 }
-                // console.log(road.id, lat, lng);
                 perimeterPoints.push(new google.maps.LatLng(lat, lng));
             }
         } else {
@@ -305,8 +302,11 @@ export class GmapService {
                 perimeterPoints.push(new google.maps.LatLng(path.lat, path.lng));
             });
         }
-
-        //console.log("boolCrossedThreshold="+boolCrossedThreshold);
+        for (var i = 0; i < this.gmap.roads.length; i++) {
+            if (this.gmap.roads[i].id == road.id) {
+                this.gmap.roads[i] = road;
+            }
+        }
         let color: string;
         if (road.color == "") {
             color = this.utilityService.getRandomColor();
@@ -322,8 +322,9 @@ export class GmapService {
         });
         polyroadroute.set("id", road.id);
         let mother = this;
-        polyroadroute.addListener('click', function () {
+        polyroadroute.addListener('click', function (event) {
             let bounds = new google.maps.LatLngBounds();
+           
             mother.routeMarkers.forEach(marker => {
                 marker.setMap(null);
             });
@@ -331,9 +332,9 @@ export class GmapService {
             if (overview_pathlatlngs) {
                 mother.routeMarkersLatLng.forEach(marker => {
                     if (marker.roadId == road.id) {
-                        let mark = mother.createMaker('', marker.latLng, road, true);
+                        let mark = mother.createMaker('', marker.latLng, road, mother.gmap.editMode);
                         mark.addListener('click', function () {
-                            mother.showInfoWindow('', mother.gmap.controller, road, mark, marker);
+                            mother.showInfoWindow('', road, mark, marker);
                         });
                         bounds.extend(marker.latLng);
                         mother.routeMarkers.push(mark);
@@ -342,9 +343,9 @@ export class GmapService {
             } else {
                 for (var i = 0; i < road.paths.length; i++) {
                     if (i == 0 || i == (road.paths.length - 1)) {
-                        let mark = mother.createMaker('', new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng), road, true);
+                        let mark = mother.createMaker('', new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng), road, mother.gmap.editMode);
                         mark.addListener('click', function () {
-                            mother.showInfoWindow('', mother.gmap.controller, road, mark, { latLng: new google.maps.LatLng(road.paths[i - 1].lat, road.paths[i - 1].lng) });
+                            mother.showInfoWindow('', road, mark, { latLng: new google.maps.LatLng(road.paths[i - 1].lat, road.paths[i - 1].lng) });
                         });
                         mother.routeMarkers.push(mark);
                     }
@@ -353,19 +354,17 @@ export class GmapService {
                 bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
 
             }
-
+            mother.showInfoWindow(`<b>Road ID:</b> ${road.id}<br><p><b>Road long</b>: ${road.distance} m<br>`,road, false, event);
             mother.gmap.controller.fitBounds(bounds);
         });
-        
-        //show the road route?
         polyroadroute.setMap(this.gmap.controller);
         //add to the array of road routes
         this.polyroadroutes.push(polyroadroute);
-
-        //this.addBorderMarker(lastPoint, dist);
     }
-
-    private showInfoWindow(text, map, road, marker, markerLatLng) {
+    private showDetailPanel(road: Road, position: any){
+        
+    }
+    private showInfoWindow(text, road, marker, markerLatLng) {
         let str: string;
         let mother = this;
         this.geocoder.geocode({
@@ -373,12 +372,23 @@ export class GmapService {
         }, function (results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
                 if (results[0]) {
-                    str = text + " (lat: " + markerLatLng.latLng.lat() + "; lng: " + markerLatLng.latLng.lng() + "), location: " + results[0].formatted_address;
+                    if(marker)
+                        str = `<p>${text}<br><b>Lat: </b>${ markerLatLng.latLng.lat()}<br><b>Lng: </b>${markerLatLng.latLng.lng()}<br><b>Location: </b>${results[0].formatted_address}</p>`;
+                    else
+                        str = text + `<b>Location</b>: ${results[0].formatted_address}</p>`;
 
                     let infowindow = new google.maps.InfoWindow({
                         content: str
                     });
-                    infowindow.open(map, marker);
+                    if (marker) infowindow.open(mother.gmap.controller, marker);
+                    else{
+                        for(var infoWin of mother.inforWindows){
+                            infoWin.setMap(null);
+                        }
+                        infowindow.setPosition(markerLatLng.latLng);
+                        infowindow.open(mother.gmap.controller);
+                        mother.inforWindows.push(infowindow);
+                    }
                 }
             }
         });
@@ -392,45 +402,48 @@ export class GmapService {
             title: text
         });
         marker.set("road", road);
-        // marker.addListener('click', function (event) {
-        //     console.log(marker.get('road'));
-        // })
-        marker.addListener('dragstart', function (event) {
-            let lat = event.latLng.lat();
-            let lng = event.latLng.lng();
-            GLOBAL.oldMarker = new google.maps.LatLng(lat, lng);
-            // let current = marker.get('road');
-        })
-        marker.addListener('dragend', function (event) {
-            // console.log(marker.get('id'));
-            let road = marker.get('road');
-            let oldLatLng = GLOBAL.oldMarker;
-            let oldLat = Math.round(oldLatLng.lat() * 100000)/100000;
-            let oldLng = Math.round(oldLatLng.lng() * 100000)/100000;
-            let newLat = event.latLng.lat();
-            let newLng = event.latLng.lng();
-            
-            // let roadPathd = [];
-            for (var i = 0; i < road.paths.length; i++) {
-                let lat = Math.round(road.paths[i].lat * 100000)/100000;
-                let lng = Math.round(road.paths[i].lng * 100000)/100000;
-                if (lat == oldLat && lng == oldLng) {
-                    road.paths[i].lat = newLat;
-                    road.paths[i].lng = newLng;
-                    GLOBAL.oldMarker = null;
-                    break;
+        if (this.gmap.editMode) {
+            marker.addListener('dragstart', function (event) {
+                let lat = event.latLng.lat();
+                let lng = event.latLng.lng();
+                GLOBAL.oldMarker = new google.maps.LatLng(lat, lng);
+                for(var infoWin of GLOBAL.GmapService.inforWindows){
+                    infoWin.setMap(null);
                 }
-            }
-            var loading = document.getElementById('wait');
-            loading.innerHTML = "<p><b><font size='4'>map processing, please wait ...</font></b><img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='30' width='30'></p>";
-            for(let polyroute of GLOBAL.GmapService.polyroadroutes){
-                let id = polyroute.get('id');
-                if (id == road.id){
-                    polyroute.setMap(null);
+            })
+            marker.addListener('dragend', function (event) {
+                for(var infoWin of GLOBAL.GmapService.inforWindows){
+                    infoWin.setMap(null);
                 }
-            }
-            GLOBAL.GmapService.drawRoute(road, true);
-        })
+                let road = marker.get('road');
+                let oldLatLng = GLOBAL.oldMarker;
+                let oldLat = Math.round(oldLatLng.lat() * 100000) / 100000;
+                let oldLng = Math.round(oldLatLng.lng() * 100000) / 100000;
+                let newLat = event.latLng.lat();
+                let newLng = event.latLng.lng();
+
+                for (var i = 0; i < road.paths.length; i++) {
+                    let lat = Math.round(road.paths[i].lat * 100000) / 100000;
+                    let lng = Math.round(road.paths[i].lng * 100000) / 100000;
+                    if (lat == oldLat && lng == oldLng) {
+                        road.paths[i].lat = newLat;
+                        road.paths[i].lng = newLng;
+                        GLOBAL.oldMarker = null;
+                        break;
+                    }
+                }
+                var loading = document.getElementById('wait');
+                loading.innerHTML = "<p><b><font size='4'>map processing, please wait ...</font></b><img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='30' width='30'></p>";
+                for (let polyroute of GLOBAL.GmapService.polyroadroutes) {
+                    let id = polyroute.get('id');
+                    if (id == road.id) {
+                        polyroute.setMap(null);
+                    }
+                }
+                GLOBAL.GmapService.drawRoute(road, true);
+            })
+
+        }
         return marker;
     }
 }

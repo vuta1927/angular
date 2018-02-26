@@ -1,11 +1,11 @@
 interface IRoad {
     id: number;
     color: string;
-    metadata: any;
+    metaData: any;
 }
 
 export class Road implements IRoad {
-    constructor(public id: number, public paths: Coordinate[], public distance: number, public color: string, public metadata: any) {
+    constructor(public id: number, public paths: Coordinate[], public distance: number, public color: string, public metaData: any) {
         this.paths = paths;
         this.distance = distance;
     }

@@ -4,6 +4,7 @@ import { DataService } from '../core/services/data.service';
 import { Response } from '@angular/http/src/static_response';
 import { Constants } from '../constants';
 import { GmapService } from './services/gmap.service';
+import { Road } from './models/Road';
 declare let google: any;
 @Component({
     selector: 'app-map',
