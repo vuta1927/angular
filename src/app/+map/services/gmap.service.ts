@@ -2,12 +2,15 @@ import { Injectable } from '@angular/core';
 import { Constants } from 'app/constants';
 import { forEach } from '@angular/router/src/utils/collection';
 import { GMap } from '../models/Map';
-import { Road } from '../models/Road';
+import { Road, Coordinate } from '../models/Road';
 import { UtilityService } from '../../core/services/utility.service';
 declare let google: any;
-let globalGmapControl: any;
-let isSnapEnable: boolean;
-let snapPoints: Array<any>;
+let GLOBAL = {
+    snapPoints: [],
+    GmapService: null,
+    isSnapEnable: false,
+    oldMarker: null
+};
 @Injectable()
 export class GmapService {
     directionsDisplay: any;
@@ -17,25 +20,35 @@ export class GmapService {
     routeMarkers = [];
     geocoder: any;
     gmap: GMap;
+    drawMode = {
+        Default: false,
+        SnapMode: true
+    };
+    loadingOverlay: any;
     directionResponses: any; // bien luu tru 2 tuyen duong kha thi giua 2 toa do
     constructor(private utilityService: UtilityService) { }
 
     public initGoogleMap(obj) {
-        isSnapEnable = false;
         this.gmap = obj;
-        let startpoint = new google.maps.LatLng(this.gmap.roads[0].slat, this.gmap.roads[0].slng);
-
+        this.loadingOverlay = new google.maps.OverlayView();
         this.directionsService = new google.maps.DirectionsService();
         this.directionsDisplay = new google.maps.DirectionsRenderer();
 
         this.gmap.controller = new google.maps.Map(document.getElementById('gmap'), {
-            zoom: 15,
-            center: startpoint,
+            center: { lat: 21.027884, lng: 105.833974 },
+            zoom: 5
         });
-        globalGmapControl = this;
+        let bounds = new google.maps.LatLngBounds();
+        this.gmap.roads.forEach(road => {
+            bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
+            bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
+        });
+        this.gmap.controller.fitBounds(bounds);
+        GLOBAL['GmapService'] = this;
+
         let mother = this;
         this.gmap.controller.addListener('click', function (event) {
-            if(!isSnapEnable){
+            if (!GLOBAL.isSnapEnable) {
                 for (let i = 0; i < mother.routeMarkers.length; i++) {
                     mother.routeMarkers[i].setMap(null);
                 }
@@ -45,27 +58,26 @@ export class GmapService {
         this.directionsDisplay = new google.maps.DirectionsRenderer();
         this.directionsDisplay.setMap(this.gmap.controller);
         this.directionResponses = [];
-        this.gmap.roads.forEach(road => { 
-            this.drawRoute(road); 
+        this.gmap.roads.forEach(road => {
+            this.drawRoute(road, this.drawMode.Default);
         });
-        this.gmap.controller.setOptions({ draggableCursor: 'pointer' });
-        this.initializeSnapToRoad();
+        this.gmap.controller.setOptions({ draggableCursor: 'default' });
+        if (this.gmap.editMode) {
+            let parentElement = document.createElement('DIV');
+            this.initializeSnapToRoad(parentElement);
+        }
+        let parentElement = document.createElement('DIV');
+        this.initializeResetView(parentElement);
     }
 
-    private initializeSnapToRoad() {
-        this.drawControl();
-    }
-
-    private drawControl() {
-        //### Add a button on Google Maps ...
-        snapPoints = [];
+    private initializeSnapToRoad(parentElement: any) {
         var addPointControl = document.createElement('DIV');
         addPointControl.id = 'setPoint';
         addPointControl.style.cursor = 'pointer';
         addPointControl.style.backgroundColor = '#fff';
         addPointControl.style.border = '2px solid #fff';
-        addPointControl.style.borderRadius = '3px';
-        addPointControl.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+        addPointControl.style.borderRadius = '2px';
+        addPointControl.style.boxShadow = '0 1px 2px rgba(0,0,0,.3)';
         addPointControl.style.backgroundImage = "url(https://cdn2.iconfinder.com/data/icons/navigation-and-mapping-1/65/path2-24.png)";
         addPointControl.style.marginTop = '12px';
         addPointControl.style.height = '28px';
@@ -73,126 +85,170 @@ export class GmapService {
         //    addPointControl.style.top = '11px';
         //    addPointControl.style.left = '120px';
         addPointControl.title = 'Click to set start point and end point of road.';
-        //myLocationControlDiv.appendChild( addPointControl);
+        parentElement.appendChild(addPointControl);
 
         this.gmap.controller.controls[google.maps.ControlPosition.TOP_CENTER].push(addPointControl);
 
         addPointControl.addEventListener('click', function (event) {
-            if (isSnapEnable) {
-                globalGmapControl.gmap.controller.setOptions({ draggableCursor: 'pointer' });
+            if (GLOBAL.isSnapEnable) {
+                GLOBAL.GmapService.gmap.controller.setOptions({ draggableCursor: 'default' });
                 document.getElementById('setPoint').style.backgroundColor = '#fff';
                 document.getElementById('setPoint').style.border = '2px solid #fff';
-                isSnapEnable = false;
+                GLOBAL.isSnapEnable = false;
                 return;
             }
-            isSnapEnable = true;
-            globalGmapControl.gmap.controller.setOptions({ draggableCursor: 'crosshair' });
+            GLOBAL.isSnapEnable = true;
+            GLOBAL.GmapService.gmap.controller.setOptions({ draggableCursor: 'crosshair' });
             // console.log(element);
             document.getElementById('setPoint').style.backgroundColor = '#ddd';
             document.getElementById('setPoint').style.border = '2px solid #ddd';
         });
 
         this.gmap.controller.addListener('click', function (event) {
-            if (!isSnapEnable) {
+            if (!GLOBAL.isSnapEnable) {
                 return;
             }
-            if (snapPoints.length < 2) {
+            if (GLOBAL.snapPoints.length < 2) {
                 let marker = new google.maps.Marker({
                     position: event.latLng,
-                    map: globalGmapControl.gmap.controller,
+                    map: GLOBAL.GmapService.gmap.controller,
                     title: '(lat: ' + event.latLng.lat() + '; lng: ' + event.latLng.lng() + ')'
                 });
-                globalGmapControl.routeMarkers.push(marker);
+                GLOBAL.GmapService.routeMarkers.push(marker);
                 if (marker) {
-                    snapPoints.push(event.latLng);
-                    if (snapPoints.length == 2) {
-                        isSnapEnable = false;
+                    GLOBAL.snapPoints.push(event.latLng);
+                    if (GLOBAL.snapPoints.length == 2) {
+                        GLOBAL.isSnapEnable = false;
 
-                        globalGmapControl.gmap.controller.setOptions({ draggableCursor: 'pointer' });
+                        GLOBAL.GmapService.gmap.controller.setOptions({ draggableCursor: 'default' });
                         document.getElementById('setPoint').style.backgroundColor = '#fff';
                         document.getElementById('setPoint').style.border = '2px solid #fff';
                         let newRoad = new Road(
-                            globalGmapControl.polyroadroutes.length + 1,
-                            snapPoints[0].lat(),
-                            snapPoints[0].lng(),
-                            snapPoints[1].lat(),
-                            snapPoints[1].lng(),
+                            GLOBAL.GmapService.polyroadroutes.length + 1,
+                            [
+                                new Coordinate(GLOBAL.snapPoints[0].lat(), GLOBAL.snapPoints[0].lng()),
+                                new Coordinate(GLOBAL.snapPoints[GLOBAL.snapPoints.length - 1].lat(), GLOBAL.snapPoints[GLOBAL.snapPoints.length - 1].lng())
+                            ],
                             0,
                             "",
-                            "new road"
+                            ""
                         );
-                        globalGmapControl.gmap.roads.push(newRoad);
-                        globalGmapControl.drawRoute(newRoad);
-                        snapPoints = [];
+                        GLOBAL.GmapService.gmap.roads.push(newRoad);
+                        var loading = document.getElementById('wait');
+                        loading.innerHTML = "<p><b><font size='4'>map processing, please wait for a moment ......</font></b><img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='30' width='30'></p>";
+                        GLOBAL.GmapService.drawRoute(newRoad, GLOBAL.GmapService.drawMode.SnapMode);
+                        GLOBAL.snapPoints = [];
                     }
                 }
             }
-            // globalGmapControl.createMaker('(lat: '+event.latLng.lat()+'; lng: '+event.latLng.lng()+')', event.latLng);
+            // GLOBAL.GmapService.createMaker('(lat: '+event.latLng.lat()+'; lng: '+event.latLng.lng()+')', event.latLng);
         });
     }
 
-    private drawRoute(road: Road) {
-        let destCoodrs = [
-            new google.maps.LatLng(road.slat, road.slng),
-            new google.maps.LatLng(road.elat, road.elng)
-        ];
-        let waypts = [];
-        destCoodrs.forEach(coodr => {
-            waypts.push({ location: coodr, stopover: true });
-        });
+    private initializeResetView(parentElement: any) {
+        var resetViewControl = document.createElement('a');
+        resetViewControl.id = 'resetView';
+        resetViewControl.style.cursor = 'pointer';
+        resetViewControl.style.backgroundColor = '#fff';
+        resetViewControl.style.border = '2px solid #fff';
+        resetViewControl.style.borderRadius = '2px';
+        resetViewControl.style.boxShadow = '0 1px 2px rgba(0,0,0,.3)';
+        resetViewControl.style.backgroundImage = "url(https://cdn0.iconfinder.com/data/icons/faticons-2/29/refresh27-24.png)";
+        resetViewControl.style.marginTop = '12px';
+        resetViewControl.style.height = '28px';
+        resetViewControl.style.width = '28px';
+        //    addPointControl.style.top = '11px';
+        resetViewControl.style.left = '120px';
+        resetViewControl.title = 'Click to reset view.';
+        parentElement.appendChild(resetViewControl);
 
-        this.directionsDisplay.setMap(this.gmap.controller);
-        let request = {
-            origin: destCoodrs[0],
-            destination: destCoodrs[destCoodrs.length - 1],
-            waypoints: waypts,
-            travelMode: google.maps.DirectionsTravelMode.DRIVING
-        };
-        let mother = this;
-        setTimeout(() => {
-            this.directionsService.route(request, function (response, status) {
-                mother.directionsearch(response, status, destCoodrs, true, road);
+        this.gmap.controller.controls[google.maps.ControlPosition.TOP_CENTER].push(resetViewControl);
+
+        resetViewControl.addEventListener('click', function () {
+            let bounds = new google.maps.LatLngBounds();
+            GLOBAL.GmapService.gmap.roads.forEach(road => {
+                bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
+                bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
             });
-        }, 500);
+            GLOBAL.GmapService.routeMarkers.forEach(marker => {
+                marker.setMap(null);
+            });
+            GLOBAL.GmapService.gmap.controller.fitBounds(bounds);
+        });
     }
 
-    private directionsearch(response: any, status: string, destCoodrs: Array<any>, store: boolean, road: Road) {
+    private drawRoute(road: Road, isSnapMode) {
+        if (!isSnapMode) {
+            this.shortenAndShow(false, road);
+        } else {
+            let destCoodrs = [
+                new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng),
+                new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng)
+            ];
+            let waypts = [];
+            destCoodrs.forEach(coodr => {
+                waypts.push({ location: coodr, stopover: true });
+            });
+
+            this.directionsDisplay.setMap(this.gmap.controller);
+            let request = {
+                origin: destCoodrs[0],
+                destination: destCoodrs[destCoodrs.length - 1],
+                waypoints: waypts,
+                travelMode: google.maps.DirectionsTravelMode.DRIVING
+            };
+            let mother = this;
+            setTimeout(() => {
+                this.directionsService.route(request, function (response, status) {
+                    mother.directionsearch(response, status, destCoodrs, road);
+                });
+            }, 1000);
+        }
+    }
+
+    private directionsearch(response: any, status: string, destCoodrs: Array<any>, road: Road) {
         //console.log("directionsearch status="+status);
         let mother = this;
         if (status == google.maps.DirectionsStatus.OVER_QUERY_LIMIT) {
             console.log("OVER_QUERY_LIMIT");
             setTimeout(() => {
-                mother.drawRoute(road);
-            }, 100);
+                mother.drawRoute(road, mother.drawMode.SnapMode);
+            }, 1000);
             //console.log("OVER_QUERY_LIMIT End");	
         } else {
             if (status == google.maps.DirectionsStatus.OK) {
                 let currentResponses = [];
-                for(var i=0; i < mother.directionResponses.length; i++){
-                    if(mother.directionResponses[i].id == road.id){
+                for (var i = 0; i < mother.directionResponses.length; i++) {
+                    if (mother.directionResponses[i].id == road.id) {
                         currentResponses.push(mother.directionResponses[i]);
                     }
                 }
                 if (currentResponses.length < 2) {
-                    mother.directionResponses.push({id: road.id, response: response});
-                    currentResponses.push({id: road.id, response: response});
+                    mother.directionResponses.push({ id: road.id, response: response });
+                    currentResponses.push({ id: road.id, response: response });
                     if (currentResponses.length < 2) {
+                        let newPaths = [];
+                        for (var i = road.paths.length - 1; i >= 0; i--) {
+                            newPaths.push(road.paths[i]);
+                        }
                         setTimeout(() => {
-                            mother.drawRoute(new Road(road.id, road.elat, road.elng, road.slat, road.slng, 0, road.color, road.description));
+                            mother.drawRoute(new Road(road.id, newPaths, 0, road.color, road.metadata), mother.drawMode.SnapMode);
                         }, 10);
-                    }else {
+                    } else {
                         let distance1: number = currentResponses[0].response.routes[0].legs[1].distance.value;
                         let distance2: number = currentResponses[1].response.routes[0].legs[1].distance.value;
                         let correctRoadResponse: any;
-                        console.log('road id:'+road.id+':'+distance1+'--'+distance2);
+                        console.log('road id:' + road.id + ':' + distance1 + '--' + distance2);
                         if (distance1 < distance2) {
+                            road.distance = distance1;
                             correctRoadResponse = currentResponses[0].response;
                         } else {
+                            road.distance = distance2;
                             correctRoadResponse = currentResponses[1].response;
                         }
                         mother.directionResponses = [];
                         //let duration = parseFloat(response.routes[0].legs[0].duration.value / 3600).toFixed(2);
-    
+
                         let route_latlngs: string;
                         if (correctRoadResponse.routes) {
                             route_latlngs = correctRoadResponse.routes[0].overview_path;
@@ -201,22 +257,10 @@ export class GmapService {
                             route_latlngs = JSON.parse(correctRoadResponse);
                             // console.log(route_latlngs);
                         }
-                        if (store) {
-                            console.log("Store");
-                            setTimeout(() => {
-                                mother.shortenAndShow(route_latlngs, road);
-                            }, 1500);
-                        } else {
-                            mother.shortenAndShow(route_latlngs, road);
-                        }
-                        let bounds = new google.maps.LatLngBounds();
-                        mother.gmap.roads.forEach(road => {
-                            bounds.extend(new google.maps.LatLng(road.slat, road.slng));
-                            bounds.extend(new google.maps.LatLng(road.elat, road.elng));
-                        });
-                        mother.gmap.controller.fitBounds(bounds);
+                        console.log(road.id,route_latlngs);
+                        mother.shortenAndShow(route_latlngs, road);
                     }
-                } 
+                }
             } else {
                 if (status == "NOT_FOUND" || status == "ZERO_RESULTS") {
                     console.log("Route NOT_FOUND, so shortenAndTryAgain");
@@ -228,22 +272,40 @@ export class GmapService {
     private shortenAndShow(overview_pathlatlngs: any, road: Road) {
         let perimeterPoints = Array();
         //loop through each leg of the route
-        for (let n = 0; n < overview_pathlatlngs.length; n++) {
-            let lat = overview_pathlatlngs[n].lat;
-            if (typeof lat !== "number") {
-                lat = overview_pathlatlngs[n].lat();
+        if (overview_pathlatlngs) {
+            var loading = document.getElementById('wait');
+            loading.innerHTML = "";
+            for(let marker of this.routeMarkers){
+                marker.setMap(null);
             }
-            let lng = overview_pathlatlngs[n].lng;
-            if (typeof lng !== "number") {
-                lng = overview_pathlatlngs[n].lng();
+            this.routeMarkers = [];this.routeMarkersLatLng = [];
+            for (let i = 0; i < overview_pathlatlngs.length; i++) {
+                let lat = overview_pathlatlngs[i].lat;
+                if (typeof lat !== "number") {
+                    lat = overview_pathlatlngs[i].lat();
+                }
+                let lng = overview_pathlatlngs[i].lng;
+                if (typeof lng !== "number") {
+                    lng = overview_pathlatlngs[i].lng();
+                }
+                if (i == 0 || i == overview_pathlatlngs.length - 1) {
+                    this.routeMarkersLatLng.push({ roadId: road.id, latLng: new google.maps.LatLng(lat, lng) });
+                    let marker = this.createMaker('', new google.maps.LatLng(lat, lng), road, true);
+                    // marker.addListener('click', function () {
+                    //     this.showInfoWindow('', this.gmap.controller, road, marker, {latLng: new google.maps.LatLng(lat, lng)});
+                    // });
+                    this.routeMarkers.push(marker);
+                    // this.createMaker(road.description, new google.maps.LatLng(lat, lng));
+                }
+                // console.log(road.id, lat, lng);
+                perimeterPoints.push(new google.maps.LatLng(lat, lng));
             }
-            if (n == 0 || n == overview_pathlatlngs.length - 1) {
-                this.routeMarkersLatLng.push({ roadId: road.id, latLng: new google.maps.LatLng(lat, lng) });
-                // this.createMaker(road.description, new google.maps.LatLng(lat, lng));
-            }
-
-            perimeterPoints.push(new google.maps.LatLng(lat, lng));
+        } else {
+            road.paths.forEach(path => {
+                perimeterPoints.push(new google.maps.LatLng(path.lat, path.lng));
+            });
         }
+
         //console.log("boolCrossedThreshold="+boolCrossedThreshold);
         let color: string;
         if (road.color == "") {
@@ -255,27 +317,46 @@ export class GmapService {
             path: perimeterPoints,
             geodesic: true,
             strokeColor: color,
-            strokeOpacity: 0.8,
-            strokeWeight: 8
+            strokeOpacity: 0.7,
+            strokeWeight: 6
         });
+        polyroadroute.set("id", road.id);
         let mother = this;
         polyroadroute.addListener('click', function () {
             let bounds = new google.maps.LatLngBounds();
             mother.routeMarkers.forEach(marker => {
                 marker.setMap(null);
             });
-            mother.routeMarkersLatLng.forEach(marker => {
-                if (marker.roadId == road.id) {
-                    let mark = mother.createMaker(road.description, marker.latLng, road.id, true);
-                    mark.addListener('click', function () {
-                        mother.showInfoWindow(mother.gmap.controller, road, mark, marker);
-                    });
-                    bounds.extend(marker.latLng);
-                    mother.routeMarkers.push(mark);
+            this.routeMarkers = [];
+            if (overview_pathlatlngs) {
+                mother.routeMarkersLatLng.forEach(marker => {
+                    if (marker.roadId == road.id) {
+                        let mark = mother.createMaker('', marker.latLng, road, true);
+                        mark.addListener('click', function () {
+                            mother.showInfoWindow('', mother.gmap.controller, road, mark, marker);
+                        });
+                        bounds.extend(marker.latLng);
+                        mother.routeMarkers.push(mark);
+                    }
+                });
+            } else {
+                for (var i = 0; i < road.paths.length; i++) {
+                    if (i == 0 || i == (road.paths.length - 1)) {
+                        let mark = mother.createMaker('', new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng), road, true);
+                        mark.addListener('click', function () {
+                            mother.showInfoWindow('', mother.gmap.controller, road, mark, { latLng: new google.maps.LatLng(road.paths[i - 1].lat, road.paths[i - 1].lng) });
+                        });
+                        mother.routeMarkers.push(mark);
+                    }
                 }
-            });
+                bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
+                bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
+
+            }
+
             mother.gmap.controller.fitBounds(bounds);
         });
+        
         //show the road route?
         polyroadroute.setMap(this.gmap.controller);
         //add to the array of road routes
@@ -284,7 +365,7 @@ export class GmapService {
         //this.addBorderMarker(lastPoint, dist);
     }
 
-    private showInfoWindow(map, road, marker, markerLatLng) {
+    private showInfoWindow(text, map, road, marker, markerLatLng) {
         let str: string;
         let mother = this;
         this.geocoder.geocode({
@@ -292,7 +373,7 @@ export class GmapService {
         }, function (results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
                 if (results[0]) {
-                    str = road.description + " (lat: " + markerLatLng.latLng.lat() + "; lng: " + markerLatLng.latLng.lng() + "), location: " + results[0].formatted_address;
+                    str = text + " (lat: " + markerLatLng.latLng.lat() + "; lng: " + markerLatLng.latLng.lng() + "), location: " + results[0].formatted_address;
 
                     let infowindow = new google.maps.InfoWindow({
                         content: str
@@ -303,16 +384,52 @@ export class GmapService {
         });
     }
 
-    private createMaker(text: string, latlng: any, roadId: number, isDraggable: boolean) {
+    private createMaker(text: string, latlng: any, road: Road, isDraggable: boolean) {
         let marker = new google.maps.Marker({
             position: latlng,
             draggable: isDraggable,
             map: this.gmap.controller,
             title: text
         });
-        marker.set("id",roadId);
-        marker.addListener('dragend', function(event){
-            console.log(event);
+        marker.set("road", road);
+        // marker.addListener('click', function (event) {
+        //     console.log(marker.get('road'));
+        // })
+        marker.addListener('dragstart', function (event) {
+            let lat = event.latLng.lat();
+            let lng = event.latLng.lng();
+            GLOBAL.oldMarker = new google.maps.LatLng(lat, lng);
+            // let current = marker.get('road');
+        })
+        marker.addListener('dragend', function (event) {
+            // console.log(marker.get('id'));
+            let road = marker.get('road');
+            let oldLatLng = GLOBAL.oldMarker;
+            let oldLat = Math.round(oldLatLng.lat() * 100000)/100000;
+            let oldLng = Math.round(oldLatLng.lng() * 100000)/100000;
+            let newLat = event.latLng.lat();
+            let newLng = event.latLng.lng();
+            
+            // let roadPathd = [];
+            for (var i = 0; i < road.paths.length; i++) {
+                let lat = Math.round(road.paths[i].lat * 100000)/100000;
+                let lng = Math.round(road.paths[i].lng * 100000)/100000;
+                if (lat == oldLat && lng == oldLng) {
+                    road.paths[i].lat = newLat;
+                    road.paths[i].lng = newLng;
+                    GLOBAL.oldMarker = null;
+                    break;
+                }
+            }
+            var loading = document.getElementById('wait');
+            loading.innerHTML = "<p><b><font size='4'>map processing, please wait ...</font></b><img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='30' width='30'></p>";
+            for(let polyroute of GLOBAL.GmapService.polyroadroutes){
+                let id = polyroute.get('id');
+                if (id == road.id){
+                    polyroute.setMap(null);
+                }
+            }
+            GLOBAL.GmapService.drawRoute(road, true);
         })
         return marker;
     }
