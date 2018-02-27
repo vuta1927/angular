@@ -1,55 +1,77 @@
 <div id="content">
-    <section id="widget-grid" class="">
-      <!-- row -->
-      <div class="row">
-        <!-- NEW WIDGET START -->
-        <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12 sortable-grid ui-sortable">
-          <!-- Widget ID (each widget will need unique ID)-->
-          <div class="jarviswidget jarviswidget-sortable" id="wid-id-0" role="widget">
-            <header role="heading">
-              <span class="widget-icon">
-                <i class="fa fa-map"></i>
-              </span>
-              <h2>Map</h2>
-              <span class="jarviswidget-loader">
-                <i class="fa fa-refresh fa-spin"></i>
-              </span>
-            </header>
-            <!-- widget div-->
-            <div role="content">
-              <!-- widget content -->
-              <div class="widget-body">
-                <!-- this is what the user will see -->
-                <div class="row">
-                  <div class="col-md-12" id="gmapLoading">
+  <section id="widget-grid" class="">
+    <!-- row -->
+    <div class="row">
+      <!-- NEW WIDGET START -->
+      <article class="col-xs-12 col-sm-12 col-md-12 col-lg-12 sortable-grid ui-sortable">
+        <!-- Widget ID (each widget will need unique ID)-->
+        <div class="jarviswidget jarviswidget-sortable" id="wid-id-0" role="widget">
+          <header role="heading">
+            <span class="widget-icon">
+              <i class="fa fa-map"></i>
+            </span>
+            <h2>Map</h2>
+            <span class="jarviswidget-loader">
+              <i class="fa fa-refresh fa-spin"></i>
+            </span>
+          </header>
+          <!-- widget div-->
+          <div role="content">
+            <!-- widget content -->
+            <div class="widget-body">
+              <!-- this is what the user will see -->
+              <div class="row">
 
-                      <div id="wait" name="wait" align="center"></div>
-                      <!-- <div id="gmapLoading" class="overlay standard hidden">&nbsp</div> -->
-                      <div id="road-detail-panel" hidden=true>
-                      
+                <div id="map-wait" name="map-wait" align="center">
+                  <div id="gmap-ctrls">
+                    <div id="gmap-ctrl1" class="gmap-ctrl">
+                      <div id="gmap-searchPanel" class="form-group" style="width: 300px">
+                        <input type="search" class="form-control input" style="font-size: 16px" id="gmap-txtSearch" placeholder="Enter to search">
                       </div>
-                    <div id="gmap"></div>
+                        
+                      <div style="overflow-y: scroll; height: 290px;">
+                        <!-- <div id="results"></div> -->
+                        <table id="gmapRoadsTable" class="table table-responsive table-hover table-sm" style="font-size: 14px">
+                          <thead>
+
+                          </thead>
+                          <tbody>
+                          </tbody>
+                        </table>
+                        <!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
+                      </div>
+                    </div>
+                    <div id="gmap-ctrl2" class="gmap-ctrl">
+                        <a id="gmap-setPoint" class="btn btn-sm btn-default"><i class="fa fa-map-marker"></i></a>
+                      <a id="gmap-resetView" class="btn btn-sm btn-default"><i class="fa fa-refresh"></i></a>
+                    </div>
                   </div>
                 </div>
+                <div id="gmap"></div>
+
+                <div class="GmapShowDetailControl">
+                  <a id="btnShowDetail" class="btn btn-default btn-xs">
+                    <i class="fa fa-list"></i> Road List</a>
+                </div>
               </div>
-              <!-- end widget content -->
             </div>
-            <!-- end widget div -->
+            <!-- end widget content -->
           </div>
-          <!-- end widget -->
-        </article>
-        <!-- WIDGET END -->
-      </div>
-      <!-- end row -->
-      <!-- row -->
-      <div class="row">
-        <!-- a blank row to get started -->
-        <div class="col-sm-12">
-          <!-- your contents here -->
+          <!-- end widget div -->
         </div>
+        <!-- end widget -->
+      </article>
+      <!-- WIDGET END -->
+    </div>
+    <!-- end row -->
+    <!-- row -->
+    <div class="row">
+      <!-- a blank row to get started -->
+      <div class="col-sm-12">
+        <!-- your contents here -->
       </div>
-      <!-- end row -->
-    </section>
-    <!-- end widget grid -->
-  </div>
-  
+    </div>
+    <!-- end row -->
+  </section>
+  <!-- end widget grid -->
+</div>
