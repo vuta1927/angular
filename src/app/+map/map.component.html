@@ -22,36 +22,50 @@
               <!-- this is what the user will see -->
               <div class="row">
 
-                <div id="map-wait" name="map-wait" align="center">
-                  <div id="gmap-ctrls">
-                    <div id="gmap-ctrl1" class="gmap-ctrl">
-                      <div id="gmap-searchPanel" class="form-group" style="width: 300px">
-                        <input type="search" class="form-control input" style="font-size: 16px" id="gmap-txtSearch" placeholder="Enter to search">
-                      </div>
-                        
-                      <div style="overflow-y: scroll; height: 290px;">
-                        <!-- <div id="results"></div> -->
-                        <table id="gmapRoadsTable" class="table table-responsive table-hover table-sm" style="font-size: 14px">
-                          <thead>
-
-                          </thead>
-                          <tbody>
-                          </tbody>
-                        </table>
-                        <!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
-                      </div>
-                    </div>
-                    <div id="gmap-ctrl2" class="gmap-ctrl">
-                        <a id="gmap-setPoint" class="btn btn-sm btn-default"><i class="fa fa-map-marker"></i></a>
-                      <a id="gmap-resetView" class="btn btn-sm btn-default"><i class="fa fa-refresh"></i></a>
-                    </div>
-                  </div>
+                <div id="gmap-wait" name="gmap-wait" align="center"></div>
+                <div class="GmapShowDetailControl">
+                  <a id="gmap-btnShowDetail" class="btn btn-default btn-sm">
+                    <i class="fa fa-list"></i> Road List</a>
                 </div>
                 <div id="gmap"></div>
-
-                <div class="GmapShowDetailControl">
-                  <a id="btnShowDetail" class="btn btn-default btn-xs">
-                    <i class="fa fa-list"></i> Road List</a>
+                <div id="gmap-ctrls">
+                  <div id="gmap-ctrl1" class="gmap-ctrl">
+                    <div id="gmap-searchPanel" style="width: 350px">
+                      <div class="input-group  stylish-input-group">
+                        <input type="search" class="form-control input" style="font-size: 14px" id="gmap-txtSearch" placeholder="Enter to search">
+                        <span class="input-group-addon">
+                          <button id="gmap-btnSearchEraser" type="button" style="height: 100%; background-color: #ccc">
+                            <i class="fa fa-eraser"></i>
+                            <!-- <span class="glyphicon glyphicon-search"></span> -->
+                          </button>
+                          <button id="gmap-btnSearch" type="button" style="height: 100%; background-color: #ccc">
+                            <i class="fa fa-search" style="height: 100%"></i>
+                            <!-- <span class="glyphicon glyphicon-search"></span> -->
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    <div id="gmapRoadTableDiv" style="overflow-y: auto; height: 290px; width: 350px">
+                      <!-- <div id="results"></div> -->
+                      <table id="gmapRoadsTable" class="table table-hover table-sm" style="font-size: 14px">
+                        <thead>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                      </table>
+                      <!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
+                    </div>
+                  </div>
+                  <div id="gmap-ctrl2" class="gmap-ctrl">
+                    <a id="gmap-setPoint" class="btn btn-default btn-sm">
+                      <i class="fa fa-map-marker"></i>
+                    </a>
+                    <a id="gmap-resetView" class="btn btn-default btn-sm">
+                      <i class="fa fa-refresh"></i>
+                    </a>
+                  </div>
+                  <div id="gmap-description" class="gmap-ctrl">
+                  </div>
                 </div>
               </div>
             </div>

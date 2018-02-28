@@ -18,10 +18,11 @@ interface ICoordinate{
 
 interface IMetaData{
     name: string;
-    direction: string;
+    direction: any;
 }
 export class MetaData{
-    constructor(public name?, public direction?){}
+    constructor(public name?, public direction?){
+    }
 }
 export class Coordinate implements ICoordinate{
     constructor(public lat: number, public lng: number){}
