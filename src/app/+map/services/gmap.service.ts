@@ -7,13 +7,16 @@ import { UtilityService } from '../../core/services/utility.service';
 import { FormsModule } from '@angular/forms';
 import { Handler } from 'tapable';
 declare let google: any;
+declare var jquery: any;
+declare var $: any;
 let GLOBAL = {
     snapPoints: [],
     GmapService: null,
     isSnapEnable: false,
     oldMarker: null,
     isRoadsTableEnable: false,
-    gmapTimer: null
+    gmapTimer: null,
+    addIconPoint: false
 };
 @Injectable()
 export class GmapService {
@@ -33,6 +36,10 @@ export class GmapService {
     inforWindows = [];
     descriptions = [];
     directionResponses: any; // bien luu tru 2 tuyen duong kha thi giua 2 toa do
+    myIcon = {
+        camera: 'https://cdn3.iconfinder.com/data/icons/wpzoom-developer-icon-set/500/41-20.png',
+        info: 'https://cdn2.iconfinder.com/data/icons/basic-ui-25/64/x-43-20.png'
+    }
     constructor(private utilityService: UtilityService) { }
 
     public initGoogleMap(obj) {
@@ -45,14 +52,26 @@ export class GmapService {
             center: { lat: 21.027884, lng: 105.833974 },
             zoom: 7,
             gestureHandling: 'greedy',
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.VERTICAL_BAR, //HORIZONTAL_BAR,
+                position: google.maps.ControlPosition.RIGHT_TOP
+            },
+            fullscreenControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            }
 
         });
-        let bounds = new google.maps.LatLngBounds();
-        this.gmap.roads.forEach(road => {
-            bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
-            bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
-        });
-        this.gmap.controller.fitBounds(bounds);
+        if (this.gmap.roads.length > 0) {
+            var bounds = new google.maps.LatLngBounds();
+            this.gmap.roads.forEach(function (road) {
+                bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
+                bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
+            });
+            // this.gmap.controller.fitBounds(bounds);
+            var temp = bounds.getCenter();
+            this.gmap.controller.setCenter(temp);
+            this.gmap.controller.setZoom(17);
+        }
         GLOBAL.GmapService = this;
 
         let mother = this;
@@ -77,7 +96,7 @@ export class GmapService {
         this.initPanelControl();
     }
 
-    private setCenter(lat: number, lng: number){
+    private setCenter(lat: number, lng: number) {
         this.gmap.controller.setOptions({
             center: {
                 lat,
@@ -86,7 +105,7 @@ export class GmapService {
         });
     }
 
-    private addDescription (src, text) {
+    private addDescription(src, text) {
         this.descriptions.push({
             icon: src,
             desc: text
@@ -101,10 +120,12 @@ export class GmapService {
     }
 
     private initPanelControl() {
-        this.gmap.controller.controls[google.maps.ControlPosition.TOP_LEFT].push(document.getElementById('gmap-btnShowDetail'));
+        this.gmap.controller.controls[google.maps.ControlPosition.LEFT_TOP].push(document.getElementById('gmap-btnShowDetail'));
+        this.gmap.controller.controls[google.maps.ControlPosition.TOP_CENTER].push(document.getElementById('gmap-description'));
         this.gmap.controller.controls[google.maps.ControlPosition.LEFT_TOP].push(document.getElementById('gmap-ctrl1'));
         this.gmap.controller.controls[google.maps.ControlPosition.RIGHT_TOP].push(document.getElementById('gmap-ctrl2'));
-        this.gmap.controller.controls[google.maps.ControlPosition.TOP_LEFT].push(document.getElementById('gmap-description'));
+        this.gmap.controller.controls[google.maps.ControlPosition.TOP_CENTER].push(document.getElementById('gmap-ctrl3'));
+        document.getElementById('gmap-DialogContainer').style.display = 'none';
         if (this.descriptions.length < 1) {
             document.getElementById('gmap-description').style.display = 'none';
         }
@@ -128,6 +149,24 @@ export class GmapService {
             })
         });
 
+        var mother = this;
+
+        document.getElementById('gmap-ctrl3').style.display = 'none';
+        var addIconPointControl = document.getElementById('gmap-addIconPoint');
+        if (!this.gmap.editMode) {
+            addIconPointControl.style.display = 'none';
+        }
+        addIconPointControl.addEventListener('click', function () {
+            if (!GLOBAL.addIconPoint) {
+                GLOBAL.addIconPoint = true;
+                document.getElementById('gmap-ctrl3').style.display = 'block';
+                document.getElementById('gmap-ctrl3').innerHTML = `<p><strong>Please click on route where you want to add icon ...</strong></p>`;
+            } else {
+                document.getElementById('gmap-ctrl3').style.display = 'none';
+                document.getElementById('gmap-ctrl3').innerHTML = ``;
+                GLOBAL.addIconPoint = false;
+            }
+        });
 
         var setPointControl = document.getElementById('gmap-setPoint');
 
@@ -213,6 +252,7 @@ export class GmapService {
         resultContext.style.fontSize = '11pt';
         resultContext.style.marginTop = '10px';
         resultContext.style.marginBottom = '10px';
+        resultContext.align = 'center';
         searchPanel.appendChild(resultContext);
         mother.bindingTable(GLOBAL.GmapService.gmap.roads);
 
@@ -223,7 +263,7 @@ export class GmapService {
             gmapControl.style.display = 'block';
             GLOBAL.isRoadsTableEnable = true;
         }
-        
+
         document.getElementById('gmap-btnSearchEraser').addEventListener("click", function (event) {
             document.getElementById('gmap-txtSearch').value = '';
             var table = document.getElementById('gmapRoadsTable');
@@ -234,7 +274,7 @@ export class GmapService {
             theadEl.innerHTML = '';
             mother.bindingTable(mother.gmap.roads);
         });
-        document.getElementById('gmap-btnSearch').addEventListener("click", function(event){
+        document.getElementById('gmap-btnSearch').addEventListener("click", function (event) {
             document.getElementById('gmap-resultsCount').innerHTML = "Searching ...... <img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='25' width='25'>";
             setTimeout(() => {
                 var val = document.getElementById('gmap-txtSearch').value;
@@ -245,8 +285,6 @@ export class GmapService {
                 var tbody = table.getElementsByTagName('tbody')[0];
                 tbody.innerHTML = '';
                 theadEl.innerHTML = '';
-
-                
                 var roads = GLOBAL.GmapService.gmap.roads;
                 if (!val) {
                     results = roads;
@@ -262,7 +300,7 @@ export class GmapService {
                         return;
                     }
                 }
-                
+
                 mother.bindingTable(results);
             }, 2000);
         })
@@ -280,7 +318,7 @@ export class GmapService {
                 tbody.innerHTML = '';
                 theadEl.innerHTML = '';
 
-                
+
                 var roads = GLOBAL.GmapService.gmap.roads;
                 if (!val) {
                     results = roads;
@@ -296,7 +334,7 @@ export class GmapService {
                         return;
                     }
                 }
-                
+
                 mother.bindingTable(results);
                 // resultsControl.innerHTML = results;
             }, ms);
@@ -304,7 +342,7 @@ export class GmapService {
 
     }
 
-    private bindingTable (data) {
+    private bindingTable(data) {
         var resultContext = document.getElementById('gmap-resultsCount');
         resultContext.innerHTML = '';
         var table = document.getElementById('gmapRoadsTable');
@@ -346,23 +384,21 @@ export class GmapService {
                         GLOBAL.GmapService.routeMarkers.forEach(function (marker) {
                             marker.setMap(null);
                         });
-                        if(mother.gmap.editMode){
-                            var _loop_1 = function () {
-                                if (i == 0 || i == road.paths.length - 1) {
-                                    var mark = GLOBAL.GmapService.createMaker('', new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng), road, mother.gmap.editMode);
-                                    mark.addListener('click', function () {
-                                        mother.showInfoWindow('', road, mark, {
-                                            latLng: new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng)
-                                        });
+                        if (mother.gmap.editMode) {
+                            if (i == 0 || i == road.paths.length - 1) {
+                                var mark = GLOBAL.GmapService.createMaker('', new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng), road, mother.gmap.editMode);
+                                mark.addListener('click', function () {
+                                    mother.showInfoWindow('', road, mark, {
+                                        latLng: new google.maps.LatLng(road.paths[i].lat, road.paths[i].lng)
                                     });
-                                    mother.routeMarkers.push(mark);
-                                }
-                            };
-                            for (var i = 0; i < road.paths.length; i++) {
-                                _loop_1();
+                                });
+                                mother.routeMarkers.push(mark);
                             }
+                            // for (var i = 0; i < road.paths.length; i++) {
+                            //     _loop_1();
+                            // }
                         }
-                        
+
                         var rndNumber = Math.floor((Math.random() * (road.paths.length - 2)) + 1);
                         var latLngs = {
                             latLng: new google.maps.LatLng(road.paths[rndNumber].lat, road.paths[rndNumber].lng)
@@ -370,7 +406,9 @@ export class GmapService {
                         GLOBAL.GmapService.showInfoWindow("", road, false, latLngs);
                     }
                 });
-                GLOBAL.GmapService.gmap.controller.fitBounds(bounds);
+                var temp = bounds.getCenter();
+                GLOBAL.GmapService.gmap.controller.setCenter(temp);
+                GLOBAL.GmapService.gmap.controller.setZoom(17);
             });
         });
     }
@@ -516,6 +554,104 @@ export class GmapService {
             });
         }
 
+        var color;
+        if (road.color == "") {
+            color = this.utilityService.getRandomColor();
+        } else {
+            color = road.color;
+        }
+        var polyroadroute = new google.maps.Polyline({
+            path: perimeterPoints,
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 0.7,
+            strokeWeight: 6
+        });
+        polyroadroute.set("id", road.id);
+        var mother = this;
+        polyroadroute.addListener('click', function (event) {
+            if (GLOBAL.addIconPoint) {
+                // var symbolOne = {
+                //     path: 'M 0 6 L 0 26 L 24 26 L 24 19 L 32 23 L 32 9 L 24 13 L 24 6 Z',
+                //     fillColor: '#000',
+                //     strokeColor: '#000',
+                //     scale: 0.5,
+                //     fillOpacity: 1,
+                //     anchor: new google.maps.Point(17, 17)
+                // };
+                document.getElementById('gmap-DialogContainer').style.display = 'block';
+                let dialog = $("#gmap-AddIconDialog").dialog({
+                    autoOpen: false,
+                    // height: 400,
+                    width: 400,
+                    resizable: false,
+                    modal: true,
+                    closeText: '',
+                    title : "Add Icon",
+                    buttons: {
+                        "Add Icon": function () {
+                            mother.addIconOnRouteProcess(road, event.latLng);
+                            dialog.dialog("close");
+                            GLOBAL.addIconPoint = false;
+                            document.getElementById('gmap-ctrl3').innerHTML = '';
+                            document.getElementById('gmap-ctrl3').style.display = 'none';
+                        },
+                        Cancel: function () {
+                            GLOBAL.addIconPoint = false;
+                            document.getElementById('gmap-ctrl3').innerHTML = '';
+                            document.getElementById('gmap-ctrl3').style.display = 'none';
+                            dialog.dialog("close");
+                        }
+                    },
+                    close: function () {
+                    }
+                });
+
+                var form = dialog.find("form");
+                dialog.dialog("open");
+            } else {
+                var bounds = new google.maps.LatLngBounds();
+                mother.routeMarkers.forEach(function (marker) {
+                    marker.setMap(null);
+                });
+                this.routeMarkers = [];
+                if (overview_pathlatlngs) {
+                    mother.routeMarkersLatLng.forEach(function (marker) {
+                        if (marker.roadId == road.id) {
+                            var mark = mother.createMaker('', marker.latLng, road, mother.gmap.editMode);
+                            mark.addListener('click', function () {
+                                mother.showInfoWindow('', road, mark, marker);
+                            });
+                            bounds.extend(marker.latLng);
+                            mother.routeMarkers.push(mark);
+                        }
+                    });
+                    overview_pathlatlngs = null;
+                } else {
+                    if (mother.gmap.editMode) {
+                        var mark1 = mother.createMaker('', new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng), road, mother.gmap.editMode);
+                        mark1.addListener('click', function () {
+                            mother.showInfoWindow('', road, mark1, {
+                                latLng: new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng)
+                            });
+                        });
+                        var mark2 = mother.createMaker('', new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng), road, mother.gmap.editMode);
+                        mark2.addListener('click', function () {
+                            mother.showInfoWindow('', road, mark2, {
+                                latLng: new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng)
+                            });
+                        });
+                        mother.routeMarkers.push(mark1);
+                        mother.routeMarkers.push(mark2);
+                    }
+                }
+                mother.showInfoWindow("", road, false, event);
+            }
+            // bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
+            // bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
+            // mother.gmap.controller.fitBounds(bounds);
+        });
+
         var roadIds = [];
         for (var i = 0; i < this.gmap.roads.length; i++) {
             roadIds.push(this.gmap.roads[i].id);
@@ -535,62 +671,6 @@ export class GmapService {
 
         }
 
-        var color;
-        if (road.color == "") {
-            color = this.utilityService.getRandomColor();
-        } else {
-            color = road.color;
-        }
-        var polyroadroute = new google.maps.Polyline({
-            path: perimeterPoints,
-            geodesic: true,
-            strokeColor: color,
-            strokeOpacity: 0.7,
-            strokeWeight: 6
-        });
-        polyroadroute.set("id", road.id);
-        var mother = this;
-        polyroadroute.addListener('click', function (event) {
-            var bounds = new google.maps.LatLngBounds();
-            mother.routeMarkers.forEach(function (marker) {
-                marker.setMap(null);
-            });
-            this.routeMarkers = [];
-            if (overview_pathlatlngs) {
-                mother.routeMarkersLatLng.forEach(function (marker) {
-                    if (marker.roadId == road.id) {
-                        var mark = mother.createMaker('', marker.latLng, road, mother.gmap.editMode);
-                        mark.addListener('click', function () {
-                            mother.showInfoWindow('', road, mark, marker);
-                        });
-                        bounds.extend(marker.latLng);
-                        mother.routeMarkers.push(mark);
-                    }
-                });
-                overview_pathlatlngs = null;
-            } else {
-                if(mother.gmap.editMode){
-                    var mark1 = mother.createMaker('', new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng), road, mother.gmap.editMode);
-                    mark1.addListener('click', function () {
-                        mother.showInfoWindow('', road, mark1, {
-                            latLng: new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng)
-                        });
-                    });
-                    var mark2 = mother.createMaker('', new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng), road, mother.gmap.editMode);
-                    mark2.addListener('click', function () {
-                        mother.showInfoWindow('', road, mark2, {
-                            latLng: new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng)
-                        });
-                    });
-                    mother.routeMarkers.push(mark1);
-                    mother.routeMarkers.push(mark2);
-                }
-            }
-            mother.showInfoWindow("", road, false, event);
-            bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));
-            bounds.extend(new google.maps.LatLng(road.paths[road.paths.length - 1].lat, road.paths[road.paths.length - 1].lng));
-            mother.gmap.controller.fitBounds(bounds);
-        });
         polyroadroute.setMap(this.gmap.controller);
         //add to the array of road routes
         this.polyroadroutes.push(polyroadroute);
@@ -604,6 +684,41 @@ export class GmapService {
             document.getElementById('gmap-resultsCount').innerHTML = "Searching ...... <img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='25' width='25'>";
             mother.bindingTable(mother.gmap.roads);
         }, 500);
+    }
+
+    private addIconOnRouteProcess(road, latLng) {
+        var iconType = document.getElementById("gmap-iconType").value;
+        var desct = document.getElementById("gmap-addIconDesct").value;
+
+        if (!road.metaData.icons) {
+            road.metaData.icons = [];
+        }
+        var image = {
+            anchor: new google.maps.Point(10, 10), //16: center of 32x32 image
+            origin: new google.maps.Point(0, 0),
+            scaledSize: new google.maps.Size(20, 20),
+            size: new google.maps.Size(20, 20),
+            url: this.myIcon[iconType]
+        };
+        GLOBAL.addIconPoint = false;
+        this.routeMarkers.forEach(marker => {
+            marker.setMap(null);
+        });
+        var iconMark = new google.maps.Marker({
+            position: latLng,
+            draggable: true,
+            map: this.gmap.controller,
+            icon: image,
+            // anchor: new google.maps.Point(5, 30)
+        });
+        var mother = this;
+        iconMark.addListener('click', function (event) {
+            var lat = event.latLng.lat();
+            var lng = event.latLng.lng();
+            mother.showInfoWindow(desct, road, this, event);
+        })
+        document.getElementById('gmap-ctrl3').innerHTML = '';
+        document.getElementById('gmap-ctrl3').style.display = 'none';
     }
 
     private showInfoWindow(text, road, marker, markerLatLng) {
@@ -620,9 +735,32 @@ export class GmapService {
                     };
                     road.metaData.direction = newDirect;
                     if (marker)
-                        str = "<p>" + text + "<br><b>Lat: </b>" + markerLatLng.latLng.lat() + "<br><b>Lng: </b>" + markerLatLng.latLng.lng() + "<br><b>Location: </b>" + results[0].formatted_address + "</p>";
-                    else
-                        str = " <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.metaData.direction.display + "<br></p>";
+                        str = `<p><strong>${text}</strong></p>
+                        <table class="table talbe-sm" style="width: 500px">
+                        <thead>
+                            <tr>
+                                <td><strong>Loaction</strong></td>
+                                <td><strong>Lat</strong></td>
+                                <td><strong>Lng</strong></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>${results[0].formatted_address}</td><td>${markerLatLng.latLng.lat()}</td><td>${markerLatLng.latLng.lng()}</td></tr>
+                        </tbody>
+                    </table>`;//"<p>" + text + "<br><b>Lat: </b>" + markerLatLng.latLng.lat() + "<br><b>Lng: </b>" + markerLatLng.latLng.lng() + "<br><b>Location: </b>" + results[0].formatted_address + "</p>";
+                    else {
+                        str = `<p><strong>${text}</strong></p><table class="table" style="width: 500px">
+                            <thead>
+                                <tr>
+                                    <td><strong>Location</strong></td>
+                                    <td><strong>Direction</strong></td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>${results[0].formatted_address}</td><td>${road.metaData.direction.display}</td></tr>
+                            </tbody>
+                        </table>`;//" <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.metaData.direction.display + "<br></p>";
+                    }
                     var infowindow = new google.maps.InfoWindow({
                         content: str
                     });

@@ -31,19 +31,27 @@
                 <div id="gmap-ctrls">
                   <div id="gmap-ctrl1" class="gmap-ctrl">
                     <div id="gmap-searchPanel" style="width: 350px">
-                      <div class="input-group  stylish-input-group">
-                        <input type="search" class="form-control input" style="font-size: 14px" id="gmap-txtSearch" placeholder="Enter to search">
-                        <span class="input-group-addon">
-                          <button id="gmap-btnSearchEraser" type="button" style="height: 100%; background-color: #ccc">
-                            <i class="fa fa-eraser"></i>
-                            <!-- <span class="glyphicon glyphicon-search"></span> -->
-                          </button>
-                          <button id="gmap-btnSearch" type="button" style="height: 100%; background-color: #ccc">
-                            <i class="fa fa-search" style="height: 100%"></i>
-                            <!-- <span class="glyphicon glyphicon-search"></span> -->
-                          </button>
+                      <div class="input-group">
+                        <div class="icon-addon addon-md">
+                            <label class="fa fa-search" for="gmap-txtSearch" rel="tooltip" title="Enter to seach"></label>
+                            <input class="form-control" id="gmap-txtSearch" placeholder="Enter to search" type="text">
+                        </div>
+                        
+                        <span class="input-group-btn">
+                            <a class="btn" id="gmap-btnSearchEraser" rel="tooltip" title="clear input"><i class="fa fa-eraser"></i></a>
                         </span>
                       </div>
+                      <!-- <div class="input-group  stylish-input-group">
+                        <input type="search" class="form-control input" style="font-size: 14px" id="gmap-txtSearch" placeholder="Enter to search">
+                        <span class="input-group-addon">
+                          <button id="gmap-btnSearchEraser" type="button" style="height: 100%">
+                            <i class="fa fa-eraser"></i>
+                          </button>
+                          <button id="gmap-btnSearch" type="button" style="height: 100%">
+                            <i class="fa fa-search" style="height: 100%"></i>
+                          </button>
+                        </span>
+                      </div>-->
                     </div>
                     <div id="gmapRoadTableDiv" style="overflow-y: auto; height: 290px; width: 350px">
                       <!-- <div id="results"></div> -->
@@ -57,14 +65,49 @@
                     </div>
                   </div>
                   <div id="gmap-ctrl2" class="gmap-ctrl">
-                    <a id="gmap-setPoint" class="btn btn-default btn-sm">
-                      <i class="fa fa-map-marker"></i>
-                    </a>
-                    <a id="gmap-resetView" class="btn btn-default btn-sm">
-                      <i class="fa fa-refresh"></i>
-                    </a>
+                    <div>
+                      <a id="gmap-setPoint" class="btn btn-default btn-sm">
+                        <i class="fa fa-map-marker"></i>
+                      </a>
+                    </div>
+                    <div>
+                      <a id="gmap-resetView" class="btn btn-default btn-sm">
+                        <i class="fa fa-refresh"></i>
+                      </a>
+                    </div>
+                    <div>
+                      <a id="gmap-addIconPoint" class="btn btn-default btn-sm">
+                        <i class="fa fa-plus-circle"></i>
+                      </a>
+                    </div>
+
+                    <div id="gmap-ctrl3" class="gmap-ctrl">
+                    </div>
                   </div>
                   <div id="gmap-description" class="gmap-ctrl">
+                  </div>
+                  <div id="gmap-DialogContainer">
+                    <div id="gmap-AddIconDialog">
+                      <div class="form-group">
+                        <!-- <label for="gmap-iconType" class="col-md-2 control-label">Type</label> -->
+                        <div class="col-md-4">
+                          <select name="gmap-iconType" id="gmap-iconType" class="form-control">
+                            <option>camera</option>
+                            <option>info</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <br>
+                        <!-- <label class="col-md-2 control-label">Descriptions</label> -->
+                        <div class="col-md-12">
+                          <textarea class="form-control" id="gmap-addIconDesct" placeholder="Textarea" rows="4" placeholder="Descriptions"></textarea>
+                        </div>
+                      </div>
+                      <!-- <label for="gmap-addIconDesct">Descriptions</label>
+                      <textarea name="gmap-addIconDesct" id="gmap-addIconDesct" rows="5" style="width: 100%" class="ui-widget-content ui-corner-all"></textarea>
+                      <input type="button" id="gmap-btnAddIconSave" class="btn btn-success btn-sm" tabindex="-1" style="position:absolute; top:-1000px"> -->
+                    </div>
                   </div>
                 </div>
               </div>
