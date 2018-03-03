@@ -264,51 +264,22 @@ export class GmapService {
             GLOBAL.isRoadsTableEnable = true;
         }
 
-        document.getElementById('gmap-btnSearchEraser').addEventListener("click", function (event) {
-            document.getElementById('gmap-txtSearch').value = '';
-            var table = document.getElementById('gmapRoadsTable');
-            table.style.cursor = 'pointer';
-            var theadEl = table.getElementsByTagName('thead')[0];
-            var tbody = table.getElementsByTagName('tbody')[0];
-            tbody.innerHTML = '';
-            theadEl.innerHTML = '';
-            mother.bindingTable(mother.gmap.roads);
-        });
-        document.getElementById('gmap-btnSearch').addEventListener("click", function (event) {
-            document.getElementById('gmap-resultsCount').innerHTML = "Searching ...... <img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='25' width='25'>";
-            setTimeout(() => {
-                var val = document.getElementById('gmap-txtSearch').value;
-                var results = [];
-                var table = document.getElementById('gmapRoadsTable');
-                table.style.cursor = 'pointer';
-                var theadEl = table.getElementsByTagName('thead')[0];
-                var tbody = table.getElementsByTagName('tbody')[0];
-                tbody.innerHTML = '';
-                theadEl.innerHTML = '';
-                var roads = GLOBAL.GmapService.gmap.roads;
-                if (!val) {
-                    results = roads;
-                } else {
-                    for (var i = 0; i < roads.length; i++) {
-                        if (roads[i].metaData.direction.value.indexOf(val) != -1 || roads[i].metaData.direction.display.indexOf(val) != -1) {
-                            results.push(roads[i]);
-                        }
-                    }
-                    if (results.length < 1) {
-                        document.getElementById('gmap-resultsCount').innerHTML = "No result found.";
-
-                        return;
-                    }
-                }
-
-                mother.bindingTable(results);
-            }, 2000);
-        })
+        // document.getElementById('gmap-btnSearchEraser').addEventListener("click", function (event) {
+        //     $('gmap-txtSearch').val(''); //document.getElementById('gmap-txtSearch').value = '';
+        //     var table = document.getElementById('gmapRoadsTable');
+        //     table.style.cursor = 'pointer';
+        //     var theadEl = table.getElementsByTagName('thead')[0];
+        //     var tbody = table.getElementsByTagName('tbody')[0];
+        //     tbody.innerHTML = '';
+        //     theadEl.innerHTML = '';
+        //     mother.bindingTable(mother.gmap.roads);
+        // });
+        
         document.getElementById('gmap-txtSearch').addEventListener("keyup", function (event) {
             document.getElementById('gmap-resultsCount').innerHTML = "Searching ...... <img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='25' width='25'>";
             clearTimeout(GLOBAL.gmapTimer);
             var ms = 1000; // milliseconds
-            var val = document.getElementById('gmap-txtSearch').value;
+            var val = $('#gmap-txtSearch').val();//document.getElementById('gmap-txtSearch').value;
             GLOBAL.gmapTimer = setTimeout(function () {
                 var results = [];
                 var table = document.getElementById('gmapRoadsTable');
@@ -361,7 +332,7 @@ export class GmapService {
         data.forEach(function (road) {
             var newRow = tbody.insertRow(tbody.rows.length);
 
-            newRow.insertCell(0).innerHTML = '<img id="detail-icon-img" src="https://cdn1.iconfinder.com/data/icons/free-98-icons/32/map-marker-20.png" alt="map, marker icon" width="20" height="20">';
+            newRow.insertCell(0).innerHTML = '<img id="detail-icon-img" src="https://cdn1.iconfinder.com/data/icons/free-98-icons/32/map-marker-20.png" alt="map, marker icon" width="15" height="15">';
             newRow.insertCell(1).innerHTML = String(road.metaData.direction.display);
             newRow.cells[0].align = 'center';
             newRow.cells[0].vAlign = 'middle';
@@ -687,8 +658,8 @@ export class GmapService {
     }
 
     private addIconOnRouteProcess(road, latLng) {
-        var iconType = document.getElementById("gmap-iconType").value;
-        var desct = document.getElementById("gmap-addIconDesct").value;
+        var iconType = $('#gmap-iconType').val();// document.getElementById("gmap-iconType").value;
+        var desct = $('#gmap-addIconDesct').val(); // document.getElementById("gmap-addIconDesct").value;
 
         if (!road.metaData.icons) {
             road.metaData.icons = [];
@@ -735,34 +706,32 @@ export class GmapService {
                     };
                     road.metaData.direction = newDirect;
                     if (marker)
-                        str = `<p><strong>${text}</strong></p>
-                        <table class="table talbe-sm" style="width: 500px">
-                        <thead>
+                        str = `<div class="row" style="margin-left: 5px">
+                        <div><p><strong>${text}</strong></p>
+                        <table class="table talbe-sm" >
                             <tr>
-                                <td><strong>Loaction</strong></td>
-                                <td><strong>Lat</strong></td>
-                                <td><strong>Lng</strong></td>
+                                <th>Location</th>
+                                <td>${results[0].formatted_address}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>${results[0].formatted_address}</td><td>${markerLatLng.latLng.lat()}</td><td>${markerLatLng.latLng.lng()}</td></tr>
-                        </tbody>
-                    </table>`;//"<p>" + text + "<br><b>Lat: </b>" + markerLatLng.latLng.lat() + "<br><b>Lng: </b>" + markerLatLng.latLng.lng() + "<br><b>Location: </b>" + results[0].formatted_address + "</p>";
+                            <tr>
+                                <th>Lat</th>
+                                <td>${markerLatLng.latLng.lat()}</td>
+                            </tr>
+                            <tr>
+                                <th>Lng</th>
+                                <td>${markerLatLng.latLng.lng()}</td>
+                            </tr>
+                        </table></div></div>`;//"<p>" + text + "<br><b>Lat: </b>" + markerLatLng.latLng.lat() + "<br><b>Lng: </b>" + markerLatLng.latLng.lng() + "<br><b>Location: </b>" + results[0].formatted_address + "</p>";
                     else {
-                        str = `<p><strong>${text}</strong></p><table class="table" style="width: 500px">
-                            <thead>
-                                <tr>
-                                    <td><strong>Location</strong></td>
-                                    <td><strong>Direction</strong></td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>${results[0].formatted_address}</td><td>${road.metaData.direction.display}</td></tr>
-                            </tbody>
-                        </table>`;//" <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.metaData.direction.display + "<br></p>";
+                        str = `<div class="row" style="margin-left: 5px"><div><p><strong>${text}</strong></p><table class="table" >
+                                <tr><th>Location</th><td>${results[0].formatted_address}</td></tr><tr><th>Direction</th><td>${road.metaData.direction.display}</td></tr>
+                        </table></div></div>`;//" <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.metaData.direction.display + "<br></p>";
                     }
                     var infowindow = new google.maps.InfoWindow({
-                        content: str
+                        content: str,maxWidth: 200
+                    });
+                    mother.inforWindows.forEach(inforwin => {
+                        inforwin.setMap(null);
                     });
                     if (marker)
                         infowindow.open(mother.gmap.controller, marker);
@@ -818,7 +787,7 @@ export class GmapService {
                         break;
                     }
                 }
-                var loading = document.getElementById('wait');
+                var loading = document.getElementById('gmap-wait');
                 loading.innerHTML = "<p><b><font size='4'>map processing, please wait ...</font></b><img src='https://loading.io/spinners/gears/index.dual-gear-loading-icon.svg' height='30' width='30'></p>";
                 for (let polyroute of GLOBAL.GmapService.polyroadroutes) {
                     let id = polyroute.get('id');
