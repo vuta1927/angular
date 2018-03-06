@@ -8,6 +8,7 @@ export class Constants {
 
   /** API */
   public static REGISTER = '/register';
+  public static LOGIN = '/login';
   public static LOG_OUT = `${environment}/logout`;
 
   public static USER_INFO = 'assets/api/user/login-info.json';

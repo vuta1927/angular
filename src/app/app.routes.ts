@@ -9,7 +9,7 @@ export const ROUTES: Routes = [
     path: '',
     component: MainLayoutComponent,
     data: { pageTitle: 'Home' },
-    // canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
     children: [
       { path: '', redirectTo: 'map', pathMatch: 'full' },
     ]
@@ -18,6 +18,7 @@ export const ROUTES: Routes = [
     path: 'map',
     component: MainLayoutComponent,
     data: { pageTitle: 'Map' },
+    canActivate: [AuthGuard],
     children:[
       {
         path: '',

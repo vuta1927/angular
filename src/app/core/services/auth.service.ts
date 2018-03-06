@@ -6,7 +6,9 @@ import { OAuthService } from 'angular-oauth2-oidc';
 import { UtilityService } from './utility.service';
 import { ProfileModel } from '../models/profile.model';
 import { Constants } from '../../constants';
+import { fail } from 'assert';
 
+import { decode } from 'jwt-decode';
 @Injectable()
 export class AuthService {
   public jwtHelper: JwtHelper = new JwtHelper();
@@ -16,10 +18,14 @@ export class AuthService {
     private oAuthService: OAuthService
   ) {}
 
+  public getToken(): string {
+    return localStorage.getItem('token');
+  }
+
   public get isLoggedIn(): boolean {
     return this.oAuthService.hasValidAccessToken();
   }
-
+ 
   public get user(): ProfileModel | undefined {
     if (this.idToken) {
       return this.jwtHelper.decodeToken(this.idToken);
@@ -28,6 +34,7 @@ export class AuthService {
   }
 
   public getUserInfo(): Promise<object> {
+    this.oAuthService.oidc = false;
     return this.oAuthService.loadUserProfile();
   }
 
@@ -39,9 +46,13 @@ export class AuthService {
   public get accessToken(): string {
     return this.oAuthService.getAccessToken();
   }
-
   // Used to access user information
   public get idToken(): string {
     return this.oAuthService.getIdToken();
   }
+
+  public getClaim(): object{
+    return this.oAuthService. getIdentityClaims();
+  }
 }
+

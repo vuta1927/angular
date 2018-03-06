@@ -39,25 +39,25 @@ export class LoginComponent implements OnInit {
 
   public login(): void {
     // this.oAuthService.initImplicitFlow(null, {
-    //   provider: 'Google', redirect_uri: 'http://google.com'});
-    // this.formService.validateAllFormFields(this.formGroup);
-    // this.isLoading = true;
-    // if (this.formGroup.valid) {
+    //   provider: 'Google', redirect_uri: Constants.LOGIN});
+    this.formService.validateAllFormFields(this.formGroup);
+    this.isLoading = true;
+    if (this.formGroup.valid) {
 
-    //   this.oAuthService.fetchTokenUsingPasswordFlow(
-    //     this.formGroup.value.login.email,
-    //     this.formGroup.value.login.password)
-    //       .then(() => {
-    //         this.isLoading = false;
-    //         this.formGroup.reset();
-    //         this.oAuthService.setupAutomaticSilentRefresh();
-    //         this.utilityService.navigateToReturnUrl();
-    //       })
+      this.oAuthService.fetchTokenUsingPasswordFlow(
+        this.formGroup.value.login.email,
+        this.formGroup.value.login.password)
+          .then(() => {
+            this.isLoading = false;
+            this.formGroup.reset();
+            this.oAuthService.setupAutomaticSilentRefresh();
+            this.utilityService.navigateToReturnUrl();
+          })
 
-    //       .catch((err) => {
-    //         this.isLoading = false;
-    //         console.error('error logging in', err);
-    //       });
-    // }
+          .catch((err) => {
+            this.isLoading = false;
+            console.error('error logging in', err);
+          });
+    }
   }
 }
