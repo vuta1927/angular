@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './shared/layout/app-layout/main-layout.component';
 import { AuthLayoutComponent } from './shared/layout/app-layout/auth-layout.component';
 import { AuthGuard } from 'app/core/guards/auth.guard';
+import { MapGuard } from 'app/core/guards/map.guard';
 import { NotFoundComponent } from './not-found';
 
 export const ROUTES: Routes = [
