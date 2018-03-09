@@ -19,7 +19,7 @@ export const ROUTES: Routes = [
     path: 'map',
     component: MainLayoutComponent,
     data: { pageTitle: 'Map' },
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, MapGuard],
     children:[
       {
         path: '',
