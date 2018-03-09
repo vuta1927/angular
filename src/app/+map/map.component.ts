@@ -14,16 +14,28 @@ declare let google: any;
     providers: [GmapService, AuthService]
 })
 export class MapComponent implements OnInit {
+    gmaps: Array<any> = [];
+    others: Array<any> = [];
+
     constructor(private dataService: DataService, private gmapService: GmapService, private authService: AuthService) {
     }
-
     public ngOnInit() {
+        
+        
+
         let test = this.authService.getClaim();
         console.log(test);
         this.dataService.get("http://localhost:51636/api/maps").subscribe((res: Response) => {
             // console.log(res);
-            if (res["roads"].length > 0) {
-                if (res["type"] == Constants.mapType.Google)
+            let results = res['result'];
+            for(var result of results){
+                if(result['type'] == Constants.mapType.Google){
+                    this.gmaps.push(result);
+                }else{
+                    this.others.push(result);
+                }
+            }
+            if (this.gmaps.length > 0) {
                 this.gmapService.initGoogleMap(res);
             } else {
                 console.log("error! no data!");

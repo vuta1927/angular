@@ -18,8 +18,8 @@ export class AuthService {
     private oAuthService: OAuthService
   ) {}
 
-  public getToken(): string {
-    return localStorage.getItem('token');
+  public getAccessToken(): string {
+    return localStorage.getItem('access_token');
   }
 
   public get isLoggedIn(): boolean {
@@ -51,8 +51,10 @@ export class AuthService {
     return this.oAuthService.getIdToken();
   }
 
-  public getClaim(): object{
-    return this.oAuthService. getIdentityClaims();
+  public getClaim(): string[]{
+    let token = localStorage.getItem('access_token');
+    return this.jwtHelper.decodeToken(token).Permission;
+    //return this.oAuthService.getIdentityClaims();
   }
 }
 

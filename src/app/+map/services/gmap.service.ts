@@ -61,7 +61,7 @@ export class GmapService {
             }
 
         });
-        if (this.gmap.roads.length > 0) {
+        if (this.gmap.roads.length && this.gmap.roads.length > 0) {
             var bounds = new google.maps.LatLngBounds();
             this.gmap.roads.forEach(function (road) {
                 bounds.extend(new google.maps.LatLng(road.paths[0].lat, road.paths[0].lng));

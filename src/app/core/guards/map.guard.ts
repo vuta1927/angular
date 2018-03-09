@@ -8,15 +8,15 @@ import {
     CanActivate,
     Route
 } from '@angular/router';
-
+import { AuthService } from '../services/auth.service';
 @Injectable()
 export class MapGuard implements CanActivate, CanLoad {
-
-    constructor(private router: Router) {}
+    viewPermission = 'ViewMap';
+    constructor(private router: Router, private authService: AuthService) {}
 
     public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-        const url: string = state.url;
-        return this.checkLogin(url);
+        // const url: string = state.url;
+        return this.checkPermission();
     }
 
     public canActivateChild(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
@@ -24,17 +24,15 @@ export class MapGuard implements CanActivate, CanLoad {
     }
 
     public canLoad(route: Route): boolean {
-        const url = `/${route.path}`;
-        return this.checkLogin(url);
+        // const url = `/${route.path}`;
+        return this.checkPermission();
     }
 
-    private checkLogin(url: string): boolean {
-        if (this.authService.isLoggedIn) {
+    private checkPermission(): boolean {
+        var claims = this.authService.getClaim();
+        if(claims.indexOf(this.viewPermission) > -1){
             return true;
         }
-
-        this.router.navigate(['/auth/login'], {queryParams: { returnUrl: url }});
-
         return false;
     }
 }
