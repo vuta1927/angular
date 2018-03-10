@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { Constants } from 'app/constants';
 import { forEach } from '@angular/router/src/utils/collection';
 import { GMap } from '../models/Map';
-import { Road, Coordinate, MetaData } from '../models/Road';
+import { Road, Coordinate } from '../models/Road';
 import { UtilityService } from '../../core/services/utility.service';
 import { FormsModule } from '@angular/forms';
 import { Handler } from 'tapable';
+import { AuthService } from '../../core/services/auth.service';
 declare let google: any;
 declare var jquery: any;
 declare var $: any;
@@ -40,10 +41,16 @@ export class GmapService {
         camera: 'https://cdn3.iconfinder.com/data/icons/wpzoom-developer-icon-set/500/41-20.png',
         info: 'https://cdn2.iconfinder.com/data/icons/basic-ui-25/64/x-43-20.png'
     }
-    constructor(private utilityService: UtilityService) { }
+    constructor(private utilityService: UtilityService, private authService: AuthService) { }
 
     public initGoogleMap(obj) {
-        this.gmap = obj;
+        let claims = this.authService.getClaim();
+        this.gmap = obj[0];
+        if (claims.indexOf('EditMap') > -1){
+            this.gmap.editMode = true;
+        }else{
+            this.gmap.editMode = false;
+        }
 
         this.directionsService = new google.maps.DirectionsService();
         this.directionsDisplay = new google.maps.DirectionsRenderer();
@@ -214,7 +221,8 @@ export class GmapService {
                             ],
                             0,
                             "",
-                            new MetaData()
+                            "",
+                            ""
                         );
                         GLOBAL.GmapService.gmap.roads.push(newRoad);
                         var loading = document.getElementById('gmap-wait');
@@ -295,7 +303,7 @@ export class GmapService {
                     results = roads;
                 } else {
                     for (var i = 0; i < roads.length; i++) {
-                        if (roads[i].metaData.direction.value.indexOf(val) != -1 || roads[i].metaData.direction.display.indexOf(val) != -1) {
+                        if (roads[i].direction.value.indexOf(val) != -1 || roads[i].direction.display.indexOf(val) != -1) {
                             results.push(roads[i]);
                         }
                     }
@@ -333,7 +341,7 @@ export class GmapService {
             var newRow = tbody.insertRow(tbody.rows.length);
 
             newRow.insertCell(0).innerHTML = '<img id="detail-icon-img" src="https://cdn1.iconfinder.com/data/icons/free-98-icons/32/map-marker-20.png" alt="map, marker icon" width="15" height="15">';
-            newRow.insertCell(1).innerHTML = String(road.metaData.direction.display);
+            newRow.insertCell(1).innerHTML = String(road.direction.display);
             newRow.cells[0].align = 'center';
             newRow.cells[0].vAlign = 'middle';
             newRow.addEventListener('click', function (event) {
@@ -437,7 +445,7 @@ export class GmapService {
                             newPaths.push(road.paths[i]);
                         }
                         setTimeout(() => {
-                            mother.drawRoute(new Road(road.id, newPaths, 0, road.color, road.metaData), mother.drawMode.SnapMode);
+                            mother.drawRoute(new Road(road.id, newPaths, 0, road.color, road.name, road.direction), mother.drawMode.SnapMode);
                         }, 10);
                     } else {
                         let distance1: number = currentResponses[0].response.routes[0].legs[1].distance.value;
@@ -509,7 +517,7 @@ export class GmapService {
             });
         }
 
-        if (!road.metaData.direction) {
+        if (!road.direction) {
             this.geocoder.geocode({
                 'latLng': perimeterPoints[0]
             }, function (results, status) {
@@ -519,7 +527,7 @@ export class GmapService {
                             display: results[0].formatted_address,
                             value: results[0].formatted_address
                         };
-                        road.metaData.direction = newDirect;
+                        road.direction = newDirect;
                     }
                 }
             });
@@ -661,8 +669,8 @@ export class GmapService {
         var iconType = $('#gmap-iconType').val();// document.getElementById("gmap-iconType").value;
         var desct = $('#gmap-addIconDesct').val(); // document.getElementById("gmap-addIconDesct").value;
 
-        if (!road.metaData.icons) {
-            road.metaData.icons = [];
+        if (!road.icons) {
+            road.icons = [];
         }
         var image = {
             anchor: new google.maps.Point(10, 10), //16: center of 32x32 image
@@ -704,7 +712,7 @@ export class GmapService {
                         display: results[0].formatted_address,
                         value: results[0].formatted_address
                     };
-                    road.metaData.direction = newDirect;
+                    road.direction = newDirect;
                     if (marker)
                         str = `<div class="row" style="margin-left: 5px">
                         <div><p><strong>${text}</strong></p>
@@ -724,8 +732,8 @@ export class GmapService {
                         </table></div></div>`;//"<p>" + text + "<br><b>Lat: </b>" + markerLatLng.latLng.lat() + "<br><b>Lng: </b>" + markerLatLng.latLng.lng() + "<br><b>Location: </b>" + results[0].formatted_address + "</p>";
                     else {
                         str = `<div class="row" style="margin-left: 5px"><div><p><strong>${text}</strong></p><table class="table" >
-                                <tr><th>Location</th><td>${results[0].formatted_address}</td></tr><tr><th>Direction</th><td>${road.metaData.direction.display}</td></tr>
-                        </table></div></div>`;//" <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.metaData.direction.display + "<br></p>";
+                                <tr><th>Location</th><td>${results[0].formatted_address}</td></tr><tr><th>Direction</th><td>${road.direction.display}</td></tr>
+                        </table></div></div>`;//" <b>Location</b>: " + results[0].formatted_address + "<br><b>Direction: </b>" + road.direction.display + "<br></p>";
                     }
                     var infowindow = new google.maps.InfoWindow({
                         content: str,maxWidth: 200

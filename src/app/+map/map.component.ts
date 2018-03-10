@@ -3,7 +3,6 @@ import { forEach } from '@angular/router/src/utils/collection';
 import { DataService } from '../core/services/data.service';
 import { Response } from '@angular/http/src/static_response';
 import { Constants } from '../constants';
-import { AuthService } from '../core/services/auth.service';
 import { GmapService } from './services/gmap.service';
 import { Road } from './models/Road';
 declare let google: any;
@@ -11,32 +10,27 @@ declare let google: any;
     selector: 'app-map',
     templateUrl: './map.component.html',
     styleUrls: ['./map.component.css'],
-    providers: [GmapService, AuthService]
+    providers: [GmapService]
 })
 export class MapComponent implements OnInit {
     gmaps: Array<any> = [];
     others: Array<any> = [];
 
-    constructor(private dataService: DataService, private gmapService: GmapService, private authService: AuthService) {
+    constructor(private dataService: DataService, private gmapService: GmapService) {
     }
     public ngOnInit() {
-        
-        
-
-        let test = this.authService.getClaim();
-        console.log(test);
         this.dataService.get("http://localhost:51636/api/maps").subscribe((res: Response) => {
             // console.log(res);
             let results = res['result'];
             for(var result of results){
                 if(result['type'] == Constants.mapType.Google){
-                    this.gmaps.push(result);
+                    this.gmaps.push(result['mapComponent']);
                 }else{
                     this.others.push(result);
                 }
             }
             if (this.gmaps.length > 0) {
-                this.gmapService.initGoogleMap(res);
+                this.gmapService.initGoogleMap(this.gmaps);
             } else {
                 console.log("error! no data!");
             }

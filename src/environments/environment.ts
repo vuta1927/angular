@@ -3,7 +3,7 @@
 import { ApplicationRef, NgModuleRef } from '@angular/core';
 import { enableDebugTools } from '@angular/platform-browser';
 import { Environment } from './model';
-
+import { MapGuard } from '../app/core/guards/auth.guard';
 Error.stackTraceLimit = Infinity;
 require('zone.js/dist/long-stack-trace-zone');
 
@@ -38,7 +38,7 @@ export const environment: Environment = {
     return modRef;
   },
   ENV_PROVIDERS: [
-
+    MapGuard
   ]
 };
 

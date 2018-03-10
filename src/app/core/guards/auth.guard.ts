@@ -39,3 +39,27 @@ export class AuthGuard implements CanActivate, CanActivateChild, CanLoad {
         return false;
     }
 }
+
+@Injectable()
+export class MapGuard implements CanActivate, CanLoad {
+    viewPermission = 'ViewMap';
+    constructor(private router: Router, private authService: AuthService) {}
+
+    public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+        // const url: string = state.url;
+        return this.checkPermission();
+    }
+
+    public canLoad(route: Route): boolean {
+        // const url = `/${route.path}`;
+        return this.checkPermission();
+    }
+
+    private checkPermission(): boolean {
+        var claims = this.authService.getClaim();
+        if(claims.indexOf(this.viewPermission) > -1){
+            return true;
+        }
+        return false;
+    }
+}
