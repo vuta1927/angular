@@ -24,11 +24,12 @@ export class MapComponent implements OnInit {
             let results = res['result'];
             for(var result of results){
                 if(result['type'] == Constants.mapType.Google){
-                    this.gmaps.push(result['mapComponent']);
+                    this.gmaps.push(result);
                 }else{
                     this.others.push(result);
                 }
             }
+            
             if (this.gmaps.length > 0) {
                 this.gmapService.initGoogleMap(this.gmaps);
             } else {

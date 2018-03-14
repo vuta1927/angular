@@ -33,6 +33,17 @@ export class Road implements IRoad {
         this.direction = direction;
     }
 }
+
+export class ServerRoad implements IRoad{
+    constructor(public id: number, public paths: string, public distance: number, public color: string, public name: string, public direction: string, public mapId: int ) {
+        this.paths = paths;
+        this.distance = distance;
+        this.name = name;
+        this.direction = direction;
+        this.mapId = mapId;
+    }
+}
+
 export class Icon implements IIcon{
     constructor(public icon: string, public descriptions: string){ }
 }

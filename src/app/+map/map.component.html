@@ -22,9 +22,12 @@
               <!-- this is what the user will see -->
               <div class="row">
                 <div id="gmap-wait" name="gmap-wait" align="center"></div>
-                <div class="GmapShowDetailControl">
+                <div id="gmap-ctrl0" class="row gmap-ctrl">
                   <a id="gmap-btnShowDetail" class="btn btn-default btn-sm">
                     <i class="fa fa-list"></i> Road List</a>
+                  <a id="gmap-btnSaveChange" class="btn btn-default btn-sm">
+                    <i class="fa fa-save"></i> Save change
+                  </a>
                 </div>
                 <div id="gmap"></div>
                 <div id="gmap-ctrls">
@@ -71,6 +74,24 @@
                   <div id="gmap-description" class="gmap-ctrl">
                   </div>
                   <div id="gmap-DialogContainer">
+
+                    <div id="gmap-AddNewRoad">
+                      <div class="form-group">
+                        <div class="col-md-12">
+                          <p id="gmap-AddRoadMessage" style="color:red"></p>
+                        </div>
+                        <div class="col-md-12">
+                          <input class="form-control" id="gmap-txtRoadName" placeholder="Road Name">
+                        </div>
+                        <div class="col-md-12">
+                          <textarea class="form-control" id="gmap-txtRoadDirection" rows="4" placeholder="Road Direction"></textarea>
+                        </div>
+                      </div>
+                      <!-- <label for="gmap-addIconDesct">Descriptions</label>
+                          <textarea name="gmap-addIconDesct" id="gmap-addIconDesct" rows="5" style="width: 100%" class="ui-widget-content ui-corner-all"></textarea>
+                          <input type="button" id="gmap-btnAddIconSave" class="btn btn-success btn-sm" tabindex="-1" style="position:absolute; top:-1000px"> -->
+                    </div>
+
                     <div id="gmap-AddIconDialog">
                       <div class="form-group">
                         <!-- <label for="gmap-iconType" class="col-md-2 control-label">Type</label> -->
